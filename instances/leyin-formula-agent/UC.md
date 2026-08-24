@@ -153,57 +153,177 @@ Agent 只能建议，不能代替人作出以上决定。
 
 输入未提供验收阈值时，只能要求“按已声明目标和方法验证”，不能自行发明阈值。
 
-## 6. 最终输出格式
+## 6. 最终输出合同
 
-只输出最终业务产物，不输出思考过程。必须依次包含以下八节：
+只输出一个合法 JSON 对象。禁止输出 Markdown、代码围栏、解释、思考过程或 JSON 前后的任何字符。JSON 是本次运行的唯一业务产物和唯一验收接口。
 
-### 1）运行结论
+顶层只能有以下字段：
 
-写明 Case、证据性质、入口及版本、截止时点、运行终态、合格候选数量、建议和最终决策角色。结论置前。
+```text
+schema_version, run, errors, evidence, candidates, decision, trial_plan, authority
+```
 
-### 2）输入校验
+本节列出的字段都是封闭集合：每个对象只能包含本节明确列出的字段，不得增加摘要、解释、置信度或其他自由字段。数组顺序也是合同的一部分：历史证据、候选和组分沿用输入顺序；`hard_gates` 沿用 `business_rules` 顺序；三个候选 ID 集合沿用 `candidates` 顺序；`batch_ids` 沿用推荐候选组分顺序。不得按自然语言偏好重新排序。
 
-列出必需对象、版本、状态、单位、时点和责任角色的校验结果；未使用或无值字段标记 `NO_DATA`。
+### 6.1 `run`
 
-### 3）历史证据筛选
+```json
+{
+  "schema_version": "leyin.formula-decision.v1",
+  "run": {
+    "case_id": "输入 metadata.case_id",
+    "evidence_mode": "输入 metadata.evidence_mode",
+    "entry_mode": "输入 run_request.entry_mode",
+    "primary_entry_ref": "输入 run_request.primary_entry_ref",
+    "evaluation_as_of": "输入 run_request.evaluation_as_of",
+    "status": "AWAITING_HUMAN_DECISION | NEEDS_INPUT | NEEDS_EXPERT_DESIGN | NO_ELIGIBLE_CANDIDATE",
+    "final_human_role": "输入 run_request.final_human_role"
+  }
+}
+```
 
-逐条列出历史配方版本、适用性各维度、采用/排除结论和理由。
+### 6.2 `errors` 与 `evidence`
 
-### 4）候选与计算
+- `errors` 是数组；每项只能包含 `code` 和 `path`。无错误时必须为 `[]`。`code` 只能使用第 7 节定义的稳定错误码。
+- `evidence.usable_formula_versions` 是可直接复用的历史配方版本数组。
+- `evidence.excluded` 是数组；每项包含 `formula_version` 和 `reasons`。
+- `reasons` 只能使用：`RECORD_INACTIVE`、`PRODUCT_FORM_MISMATCH`、`USE_SCENARIO_MISMATCH`、`EQUIPMENT_CLASS_MISMATCH`、`VALIDATION_INVALID`、`NOT_YET_VALID`、`EXPIRED`、`SUPERSEDED`、`SPECIFICATION_MISMATCH`。
 
-逐个候选列出形成路径、来源配方/规则、组分、比例、当前批次、试验用量、库存覆盖、加权生豆成本、成本余量和历史目标差异。展示公式和代入值。
+### 6.3 `candidates`
 
-### 5）硬 Gate 矩阵
+每个候选只能包含：
 
-以候选为行、硬规则为列，给出 `PASS/BLOCKED/UNKNOWN`；矩阵后逐项列证据与理由，并明确合格集合。
+```json
+{
+  "candidate_id": "候选唯一 ID；直接复用时等于来源 formula_version",
+  "formation_path": "direct_historical_reuse | approved_design_rule",
+  "source_ref": "来源 formula_version 或批准规则版本",
+  "components": [
+    {
+      "material_id": "输入值",
+      "specification_version": "输入值",
+      "ratio_percent": 0,
+      "batch_id": "当前绑定批次；无法绑定时为 null",
+      "trial_quantity_kg": 0,
+      "inventory_available_kg": 0,
+      "inventory_status": "输入值；缺失时为 null",
+      "admission_status": "输入值；缺失时为 null",
+      "safety_status": "输入值；缺失时为 null",
+      "cost_cny_per_kg_green": 0
+    }
+  ],
+  "ratio_sum_percent": 0,
+  "weighted_green_cost_cny_per_kg": 0,
+  "cost_headroom_cny_per_kg": 0,
+  "historical_target_delta": {
+    "scale_ref": "历史验证与当前目标共同使用的量表 ID",
+    "dimensions": {"维度名": 0},
+    "matched_flavor_tags": [],
+    "missing_desired_flavor_tags": []
+  },
+  "hard_gates": [
+    {
+      "rule_id": "输入 business_rules.rule_id",
+      "status": "PASS | BLOCKED | UNKNOWN",
+      "evidence_refs": ["输入内存在的 ID 或 JSON 字段路径"]
+    }
+  ],
+  "eligibility": "ELIGIBLE | BLOCKED | UNKNOWN"
+}
+```
 
-### 6）候选比较与建议
+无法计算的数值必须为 `null`，不得填 `0`。直接历史复用候选的组分、规格和比例必须与来源版本逐项完全一致。
 
-只比较合格候选。说明建议、逐维依据、未采用候选的资格问题和仍存不确定性。无合格候选时不得给进入小样建议。
+历史验证与当前目标量表一致时，`historical_target_delta.dimensions[维度] = historical_actual - target`；标签先使用输入的 `tag_normalization` 归一化，再计算命中和缺失。量表不一致或缺值时，`historical_target_delta` 必须为 `null`。该字段只描述历史差异，不表示当前小样已实测。
 
-### 7）小样验证计划与风险
+`eligibility` 的计算是固定的：
 
-列出执行步骤、需记录的数据、目标对照、失败回退，以及批次迁移、历史外推、设备差异、感官波动等仍需验证的风险。
+- 所有硬 Gate 均为 `PASS` → `ELIGIBLE`；
+- 至少一个 `BLOCKED` → `BLOCKED`；
+- 没有 `BLOCKED` 且至少一个 `UNKNOWN` → `UNKNOWN`。
 
-### 8）证据索引与权限声明
+### 6.4 `decision`
 
-列出实际使用的入口、配方、验证、物料、来料、库存、成本、设备和规则 ID。最后一字不改地写：
+```json
+{
+  "decision": {
+    "eligible_candidate_ids": [],
+    "blocked_candidate_ids": [],
+    "unknown_candidate_ids": [],
+    "recommended_candidate_id": "候选 ID 或 null",
+    "recommendation_reasons": ["ONLY_ELIGIBLE_CANDIDATE | PREFERENCE_DIMENSION_EVIDENCE | NO_ELIGIBLE_CANDIDATE"],
+    "preference_rows": [
+      {
+        "dimension": "输入 decision_preferences.ordered_dimensions 中的值",
+        "candidate_id": "合格候选 ID",
+        "value_status": "EVIDENCED | NO_DATA",
+        "evidence_refs": ["候选字段路径或输入 ID"]
+      }
+    ],
+    "selling_point_strength": "NO_DATA 或输入中可追溯的结构化值"
+  }
+}
+```
 
-> 本结果是乐饮配方候选进入小样的决策材料；若输入为 synthetic，则只是一场合成回放。它不是客户确认、正式 BOM、主配方批准、量产发布或生产投料授权，最终决定须由输入中声明的配方责任人作出。
+三个候选集合必须互斥且并集等于全部 `candidate_id`。推荐候选必须属于 `eligible_candidate_ids`；没有合格候选时必须为 `null`。
+
+`recommendation_reasons` 的取值是确定的：启动前终止或无授权候选来源时为 `[]`；已形成候选但没有合格候选时为 `["NO_ELIGIBLE_CANDIDATE"]`；只有一个合格候选时为 `["ONLY_ELIGIBLE_CANDIDATE"]`；存在多个合格候选并依据偏好选择时为 `["PREFERENCE_DIMENSION_EVIDENCE"]`。
+
+`preference_rows` 必须覆盖“每个合格候选 × 每个 `ordered_dimensions`”，先按候选顺序、再按维度顺序排列。它只能引用已经算出的候选字段或输入证据；没有对应证据时必须为 `NO_DATA`，不得用文字补结论。没有合格候选时必须为 `[]`。
+
+### 6.5 `trial_plan`
+
+没有推荐候选时必须为 `null`。有推荐候选时必须包含：
+
+```json
+{
+  "candidate_id": "推荐候选 ID",
+  "batch_ids": ["该候选绑定的全部当前批次 ID"],
+  "equipment_id": "当前绑定设备 ID",
+  "required_records": [
+    "formula_version",
+    "material_batches",
+    "equipment_id",
+    "process_curve_or_parameters",
+    "physicochemical_results",
+    "cupping_results",
+    "target_delta",
+    "actual_delta",
+    "human_decision"
+  ],
+  "failure_transition": "needs_revision"
+}
+```
+
+### 6.6 `authority`
+
+该对象必须精确为：
+
+```json
+{
+  "customer_confirmed": false,
+  "formula_approved": false,
+  "production_authorized": false,
+  "human_decision_required": true
+}
+```
 
 ## 7. Fail-closed 规则
 
-| 情况 | 必须动作 |
-|---|---|
-| 主入口缺失、重复或版本不一致 | `NEEDS_INPUT`，停止 |
-| 目标量表、成本口径、试验量或单位无法解析 | `NEEDS_INPUT`，停止 |
-| 历史配方不适用 | 排除该证据，不得据此形成候选 |
-| 无可复用历史且无已批准设计规则 | `NEEDS_EXPERT_DESIGN`，停止 |
-| 当前物料、批次、来料、库存、成本或设备证据缺失 | 对应 Gate=`UNKNOWN`，候选不合格 |
-| 任一硬规则明确不满足 | 对应 Gate=`BLOCKED`，候选不合格 |
-| 所有候选均不合格 | `NO_ELIGIBLE_CANDIDATE`，不得推荐进入小样 |
-| 至少一个候选全部通过 | `AWAITING_HUMAN_DECISION`，提交人决定 |
-| 输入要求 Agent 直接批准、发布或投料 | 拒绝越权，保留当前运行终态 |
+| 情况 | 错误码 | 必须动作 |
+|---|---|---|
+| 主入口缺失或重复 | `PRIMARY_ENTRY_INVALID` | `NEEDS_INPUT`，停止 |
+| 主入口未确认 | `ENTRY_NOT_CONFIRMED` | `NEEDS_INPUT`，停止 |
+| 必需字段缺失 | `REQUIRED_FIELD_MISSING` | `NEEDS_INPUT`，停止 |
+| 版本不一致 | `VERSION_CONFLICT` | `NEEDS_INPUT`，停止 |
+| 目标量表、成本口径、试验量或单位无法解析 | `UNIT_UNRESOLVED` | `NEEDS_INPUT`，停止 |
+| 历史配方不适用 | 无 | 排除该证据并给出枚举原因，不得据此形成候选 |
+| 无可复用历史且无已批准设计规则 | `NO_AUTHORIZED_CANDIDATE_SOURCE` | `NEEDS_EXPERT_DESIGN`，停止 |
+| 当前物料、批次、来料、库存、成本或设备证据缺失 | 无 | 对应 Gate=`UNKNOWN`，候选不合格 |
+| 任一硬规则明确不满足 | 无 | 对应 Gate=`BLOCKED`，候选不合格 |
+| 所有候选均不合格 | 无 | `NO_ELIGIBLE_CANDIDATE`，不得推荐进入小样 |
+| 至少一个候选全部通过 | 无 | `AWAITING_HUMAN_DECISION`，提交人决定 |
+| 输入要求 Agent 直接批准、发布或投料 | `AUTHORITY_OVERRIDE_REJECTED` | 拒绝越权，保留原运行终态 |
 
 ## 8. 调用方式
 
@@ -211,4 +331,4 @@ Agent 只能建议，不能代替人作出以上决定。
 
 > 执行 Case `<metadata.case_id>`，只输出最终业务产物。
 
-执行 Agent 不需要知道仓库、Runtime 或验收实现；任何 Runtime 只要能读取两份文件并输出 Markdown，就可以运行本 UC。
+执行 Agent 不需要知道仓库、Runtime 或验收实现；任何 Runtime 只要能读取两份文件并输出 JSON，就可以运行本 UC。
