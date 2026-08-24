@@ -275,8 +275,6 @@
       "cost": {"value": 37.5, "currency": "CNY", "unit": "kg_green"},
       "physical": {"moisture_percent": 10.7, "density_g_per_l": 690},
       "lot_cupping_descriptors": ["可可", "烤坚果", "低酸", "醇厚"],
-      "synthetic_response_profile": {"chocolate": 4.4, "roasted_nut": 4.3, "caramel": 2.8, "acidity": 1.5, "sweetness": 3.2, "body": 4.5},
-      "risk_tags": {"fermented": 0.4, "floral_dominant": 0.1, "burnt": 0.0},
       "evidence_ref": "LOT-CUP-BRA-26A"
     },
     {
@@ -290,8 +288,6 @@
       "cost": {"value": 48.0, "currency": "CNY", "unit": "kg_green"},
       "physical": {"moisture_percent": 10.5, "density_g_per_l": 715},
       "lot_cupping_descriptors": ["焦糖", "甜感", "平衡", "柑橘酸"],
-      "synthetic_response_profile": {"chocolate": 2.8, "roasted_nut": 3.0, "caramel": 4.5, "acidity": 3.0, "sweetness": 4.5, "body": 3.2},
-      "risk_tags": {"fermented": 0.1, "floral_dominant": 0.5, "burnt": 0.0},
       "evidence_ref": "LOT-CUP-COL-26B"
     },
     {
@@ -305,8 +301,6 @@
       "cost": {"value": 58.0, "currency": "CNY", "unit": "kg_green"},
       "physical": {"moisture_percent": 10.6, "density_g_per_l": 725},
       "lot_cupping_descriptors": ["可可", "烘烤香", "焦糖", "圆润"],
-      "synthetic_response_profile": {"chocolate": 4.1, "roasted_nut": 4.0, "caramel": 3.7, "acidity": 2.3, "sweetness": 3.7, "body": 4.0},
-      "risk_tags": {"fermented": 0.2, "floral_dominant": 0.3, "burnt": 0.0},
       "sourcing": {"existing_supplier": true, "lead_time_days": 7, "minimum_order_kg": 10},
       "evidence_ref": "LOT-CUP-GUA-26C"
     },
@@ -321,8 +315,6 @@
       "cost": {"value": 45.0, "currency": "CNY", "unit": "kg_green"},
       "physical": {"moisture_percent": 10.8, "density_g_per_l": 705},
       "lot_cupping_descriptors": ["牛奶巧克力", "坚果", "焦糖", "中等醇厚"],
-      "synthetic_response_profile": {"chocolate": 3.8, "roasted_nut": 3.9, "caramel": 3.6, "acidity": 2.2, "sweetness": 3.8, "body": 3.7},
-      "risk_tags": {"fermented": 0.2, "floral_dominant": 0.2, "burnt": 0.0},
       "approved_substitution_for": ["MAT-GUA-WASH"],
       "substitution_limit_percent": 20,
       "evidence_ref": "LOT-CUP-HND-26D"
@@ -338,8 +330,6 @@
       "cost": {"value": 55.0, "currency": "CNY", "unit": "kg_green"},
       "physical": {"moisture_percent": 10.4, "density_g_per_l": 735},
       "lot_cupping_descriptors": ["花香", "柑橘", "茶感", "较高酸度"],
-      "synthetic_response_profile": {"chocolate": 1.5, "roasted_nut": 1.8, "caramel": 2.5, "acidity": 4.5, "sweetness": 4.0, "body": 2.4},
-      "risk_tags": {"fermented": 0.2, "floral_dominant": 4.2, "burnt": 0.0},
       "evidence_ref": "LOT-CUP-ETH-26E"
     }
   ],
@@ -436,11 +426,6 @@
         "expected_actual_delta",
         "human_decision"
       ]
-    },
-    "synthetic_roast_adjustments": {
-      "medium": {"chocolate": 0.0, "roasted_nut": 0.0, "caramel": 0.0, "acidity": 0.0, "sweetness": 0.0, "body": 0.0, "bitterness": 0.0, "floral_dominant": 0.0},
-      "medium_dark": {"chocolate": 0.3, "roasted_nut": 0.2, "caramel": 0.1, "acidity": -0.3, "sweetness": -0.2, "body": 0.3, "bitterness": 0.5, "floral_dominant": -0.3}
-    },
-    "synthetic_milk_context_adjustments": {"chocolate": -0.2, "roasted_nut": -0.2, "caramel": -0.1, "acidity": -0.4, "sweetness": 0.0, "body": -0.1}
+    }
   }
 }
