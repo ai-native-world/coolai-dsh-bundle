@@ -1,0 +1,20 @@
+{
+  "trial_id": "TRIAL-SYN-CAND-ESP-014-v3",
+  "candidate_version": "SYN-CAND-ESP-014-v3",
+  "equipment_class": "15kg样品验证机",
+  "material_batches": [
+    { "material_id": "SYN-BRA-BC14", "batch_id": "SYN-BATCH-BRA-01" },
+    { "material_id": "SYN-COL-HU12", "batch_id": "SYN-BATCH-COL-01" },
+    { "material_id": "SYN-ETH-74110", "batch_id": "SYN-BATCH-ETH-01" }
+  ],
+  "actual_sensory": {
+    "acidity": 2,
+    "sweetness": 4,
+    "body": 4,
+    "flavor_notes": ["巧克力", "坚果", "焦糖"]
+  },
+  "process_record_ref": "SYN-TRIAL-PROCESS-001",
+  "measurement_record_refs": ["SYN-CUPPING-001", "SYN-PHYSICAL-001"],
+  "recorded_at": "2026-08-24T10:00:00+08:00",
+  "operator_role": "烘焙研发员"
+}

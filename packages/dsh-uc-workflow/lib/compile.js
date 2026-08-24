@@ -24,6 +24,13 @@ function checkType(schema, path) {
   return true
 }
 
+function schemaAtOutputPath(schema, path) {
+  const segments = path.slice('$output.'.length).split('.')
+  let current = schema
+  for (const segment of segments) current = current?.properties?.[segment]
+  return current
+}
+
 /**
  * @param {object} contract - { id, steps, inputSchema, outputSchema, outputMapping, functionRefs }
  * @param {Set<string>} availableFunctions - 已注册的纯函数 ref 集合
@@ -53,7 +60,7 @@ export function compile(contract, availableFunctions = new Set()) {
   for (const step of contract.steps) {
 
     const kind = step.executor?.kind ?? (step.executor?.capability_ref ? 'function' : undefined)
-    if (kind !== 'function' && kind !== 'model' && kind !== 'human') throw new CompileError(`步骤 ${step.id} executor 未知: ${kind}`)
+    if (!['function', 'model', 'human', 'input'].includes(kind)) throw new CompileError(`步骤 ${step.id} executor 未知: ${kind}`)
     if (kind === 'function') {
       const ref = step.executor.ref ?? step.executor.capability_ref
       if (typeof ref !== 'string') throw new CompileError(`步骤 ${step.id} function 缺少 ref`)
@@ -62,6 +69,19 @@ export function compile(contract, availableFunctions = new Set()) {
 
     if (!step.outputKey) throw new CompileError(`步骤 ${step.id} 缺少 outputKey`)
     checkType(step.outputSchema ?? { type: 'object', properties: {} }, `步骤 ${step.id} outputSchema`)
+
+    if (step.transitionPath !== undefined) {
+      if (typeof step.transitionPath !== 'string' || !step.transitionPath.startsWith('$output.')) {
+        throw new CompileError(`步骤 ${step.id} transitionPath 必须引用 $output`)
+      }
+      const routeSchema = schemaAtOutputPath(step.outputSchema, step.transitionPath)
+      if (!Array.isArray(routeSchema?.enum) || routeSchema.enum.length === 0) {
+        throw new CompileError(`步骤 ${step.id} transitionPath 字段必须声明 enum`)
+      }
+      for (const signal of routeSchema.enum) {
+        if (step.transitions?.[signal] === undefined) throw new CompileError(`步骤 ${step.id} 缺少路由 ${signal}`)
+      }
+    }
 
     // 输入引用：字符串引用必须指向输入字段或前序步骤输出；字面量（数组/对象/标量）原样透传
     for (const [key, ref] of Object.entries(step.input ?? {})) {
@@ -97,9 +117,13 @@ export function compile(contract, availableFunctions = new Set()) {
     const src = refStr.slice('$steps.'.length).split('.')[0]
     if (!stepIds.has(src)) throw new CompileError(`输出映射 ${field} 引用悬空: ${refStr}`)
   }
+  for (const field of outputFields) {
+    if (contract.outputMapping?.[field] === undefined) throw new CompileError(`输出字段未映射: ${field}`)
+  }
 
   return Object.freeze({
     id: contract.id,
+    version: contract.version ?? '0.0.0',
     steps: Object.freeze(contract.steps.map(s => Object.freeze({ ...s }))),
     inputSchema: contract.inputSchema,
     outputSchema: contract.outputSchema,
