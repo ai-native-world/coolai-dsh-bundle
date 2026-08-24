@@ -1,582 +1,445 @@
 {
   "metadata": {
-    "schema_version": "0.2",
-    "case_id": "LY-SYN-FORMULA-REQ-001",
-    "evidence_mode": "leyin_process_grounded_synthetic_values",
-    "customer_numeric_facts": false,
-    "purpose": "在乐饮已确认的业务流程和数据形态下，验证零上下文 Agent 能否形成可靠的配方候选进入小样决策材料",
-    "forbidden_uses": [
-      "乐饮真实配方库",
-      "客户材料",
-      "正式BOM",
+    "schema_version": "leyin.formula-rd-case.v1",
+    "case_id": "LY-SYN-MILK-BLEND-001",
+    "evaluation_as_of": "2026-08-24T09:00:00+08:00",
+    "evidence_mode": "leyin_process_grounded_with_synthetic_business_values",
+    "external_access_allowed": false,
+    "notice": "除 source_evidence_catalog 中的流程事实外，所有客户需求数值、配方、批次、成本、库存和试验结果均为模拟数据，不是乐饮真实业务值"
+  },
+  "project_context": {
+    "customer": "乐饮创新（魔饮咖啡）",
+    "plant": "昆山研发点",
+    "uc_id": "UC-RD-001",
+    "uc_name": "熟豆拼配研发初稿与打样设计",
+    "stage": "客户需求已确认，进入配方案头设计，尚未打样",
+    "in_scope": "熟豆拼配小样方案",
+    "out_of_scope": [
+      "咖啡液完整配方",
+      "冻干粉完整配方",
+      "RTD完整配方",
       "正式报价",
-      "真实打样记录",
-      "主配方批准",
-      "量产发布",
+      "量产BOM",
+      "研转产放大",
       "生产投料"
     ]
   },
-  "run_request": {
-    "execution_mode": "decision_material_only",
-    "entry_mode": "requirement_driven",
-    "primary_entry_ref": "LY-SYN-REQ-001-v1",
-    "evaluation_as_of": "2026-08-24T09:00:00+08:00",
-    "language": "zh-CN",
-    "external_access_allowed": false,
-    "final_human_role": "配方责任人"
-  },
-  "project_context": {
-    "data_origin": "customer_confirmed_process",
-    "customer": "乐饮创新（魔饮咖啡）",
-    "source_repository": "ai-native-world/project-joyins",
-    "source_commit": "91016f9db7d92d985f54ff4d6135e5ff6bb5ad78",
-    "plant_scope": "昆山研发与小样环节",
-    "uc_catalog_id": "UC-RD-001",
-    "project_uc_id": "uc-recipe-match",
-    "uc_name": "配方方案确定",
-    "business_stage": "候选生豆拼配进入小样前",
-    "in_scope_product_forms": ["熟豆拼配小样"],
-    "out_of_scope_product_forms": ["浓缩液复合配方", "RTD调配", "冻干配方", "量产主配方"]
-  },
   "source_evidence_catalog": [
     {
-      "evidence_id": "LY-EVID-KS-REQ-AND-BENCHMARK",
-      "data_origin": "customer_confirmed_process",
-      "path": "meeting-notes/2026-07-25-昆山走访.md",
-      "locator": "00:25:48-00:31:02",
+      "evidence_id": "EV-KS-ABC-SOURCING",
+      "type": "客户事实",
+      "source": "project-joyins/meeting-notes/2026-07-25-昆山走访.md",
+      "locator": "00:25:48-00:28:47",
       "supports": [
-        "需求会考虑价格段、风味、卖点、豆种、比例和组合",
-        "可形成A/B/C候选",
-        "入口可以是需求单或客户标样",
-        "标样经豆型、理化和感官杯测分析后打配方与比例"
+        "研发从价格段、风味、卖点拆解到产区、等级、豆种、比例和组合",
+        "可能形成A/B/C方案",
+        "研发库无目标物料时先向原合作供应商寻源，再考虑新供应商",
+        "记录预期风味与实际风味并持续打标"
       ]
     },
     {
-      "evidence_id": "LY-EVID-KS-LEARNING-LOOP",
-      "data_origin": "customer_confirmed_process",
-      "path": "meeting-notes/2026-07-25-昆山走访.md",
-      "locator": "00:27:38-00:28:47",
+      "evidence_id": "EV-KS-TWO-ENTRY",
+      "type": "客户事实",
+      "source": "project-joyins/meeting-notes/2026-07-25-昆山走访.md",
+      "locator": "00:28:52-00:31:02",
       "supports": [
-        "实验应记录预期与实际风味",
-        "历史数据打标后可推荐候选并持续校准"
+        "需求单和客户标样是两种入口",
+        "标样需要豆型、理化和感官分析后再设计比例",
+        "测试时会比较不同方案和不同烘焙度"
       ]
     },
     {
-      "evidence_id": "LY-EVID-KS-RECIPE-SOFTWARE",
-      "data_origin": "customer_confirmed_process",
-      "path": "meeting-notes/2026-07-25-昆山走访.md",
-      "locator": "00:41:19-00:42:21、01:24:52",
+      "evidence_id": "EV-KS-CONTROLLED-COMPARE",
+      "type": "客户事实",
+      "source": "project-joyins/meeting-notes/2026-07-25-昆山走访.md",
+      "locator": "00:35:31-00:40:04",
       "supports": [
-        "小样软件记录拼配和机器界面/曲线",
-        "二维码可调出记录",
-        "配方电脑中有数据但尚未系统化"
+        "小样机和大机参数不能直接等同",
+        "比较样品时应保持研磨、水温、过滤等条件一致",
+        "由多名有辨识能力的人评价，差异可反向修正工艺"
       ]
     },
     {
-      "evidence_id": "LY-EVID-KS-SCALE-UP-BOUNDARY",
-      "data_origin": "customer_confirmed_process",
-      "path": "meeting-notes/2026-07-25-昆山走访.md",
-      "locator": "00:35:31-00:39:00",
+      "evidence_id": "EV-THREE-STEP-MATERIAL",
+      "type": "客户事实",
+      "source": "project-joyins/meeting-notes/2026-07-04-会议文字记录.md",
+      "locator": "03:15:47-03:19:17",
       "supports": [
-        "小机与大机同名温度/时间不能直接等同",
-        "放大参数必须重新验证"
+        "原料选择依次考虑价值或卖点、价格、用途",
+        "相似历史试验应复用",
+        "风味或功能组分可能互相干扰",
+        "工艺稳定性是研发风险"
       ]
     },
     {
-      "evidence_id": "LY-EVID-INITIAL-ROLE-OUTPUT",
-      "data_origin": "customer_confirmed_process",
-      "path": "meeting-notes/2026-08-05-AI智能体业务落地应用研讨会.md",
+      "evidence_id": "EV-80-POINT-DRAFT",
+      "type": "客户事实",
+      "source": "project-joyins/meeting-notes/2026-08-05-AI智能体业务落地应用研讨会.md",
       "locator": "03:56:42-03:58:31",
       "supports": [
-        "第一期面向配方人员形成可用初稿",
-        "初稿需读取需求、历史配方、理化、口感、风味评测和当前生豆库存"
+        "第一阶段帮助配方人员更快获得约80分初稿",
+        "需要读取历史配方、理化、口感、风味评测和当前生豆库存"
       ]
     },
     {
-      "evidence_id": "LY-EVID-HISTORY-REUSE",
-      "data_origin": "customer_confirmed_process",
-      "path": "meeting-notes/2026-07-04-会议文字记录.md",
-      "locator": "03:15:47-03:17:34",
+      "evidence_id": "EV-SCA-CVA",
+      "type": "行业知识",
+      "source": "https://sca.coffee/value-assessment/",
+      "locator": "CVA Framework",
       "supports": [
-        "相似需求不应重复开发",
-        "历史试验和配方可在适用时优先复用"
+        "物理、描述性、偏好或情感、外在信息应分层记录",
+        "描述性评价不等于市场偏好判断"
       ]
     },
     {
-      "evidence_id": "LY-EVID-BLUEPRINT-UC",
-      "data_origin": "customer_confirmed_process",
-      "path": "blueprint.yaml",
-      "locator": "use_cases[uc-recipe-match]",
+      "evidence_id": "EV-WCR-LEXICON",
+      "type": "行业知识",
+      "source": "https://worldcoffeeresearch.org/read-more/news/174-world-coffee-research-sensory-lexicon",
+      "locator": "Sensory Lexicon",
       "supports": [
-        "UC触发、六步流程、候选决策包、人工决定和权限边界"
+        "感官词应有统一定义和强度参照",
+        "词典用于描述风味、香气和质地，不直接判断好坏"
       ]
     }
   ],
-  "data_readiness_snapshot": [
-    {
-      "data_object": "配方库数据",
-      "source_ref": "ds-recipe-data",
-      "observed_source": "电脑文件/电子表格",
-      "connection_status": "manual",
-      "field_mapping_status": "pending_inventory",
-      "data_origin": "customer_confirmed_process"
+  "request": {
+    "entry_mode": "requirement_driven",
+    "request_version": "LY-SYN-REQ-MILK-001-v1",
+    "confirmation_status": "confirmed_for_formula_draft",
+    "source_record_ref": "LY-SYN-BRIEF-001",
+    "product_form": "熟豆拼配",
+    "use_context": {
+      "channel": "连锁门店",
+      "primary_beverage": "300 ml热奶咖",
+      "espresso_reference": "18 g粉量，36 g浓缩液",
+      "milk_reference": "240 ml全脂牛奶",
+      "secondary_evaluation": "标准黑咖条件下做描述性评价",
+      "consumer_intent": "入口浓郁但不焦苦，奶后仍能辨认巧克力、烤坚果和焦糖"
     },
-    {
-      "data_object": "小样烘焙与杯测记录",
-      "source_ref": "ds-recipe-software",
-      "observed_source": "小样烘焙软件与二维码",
-      "connection_status": "manual_file_or_qr",
-      "field_mapping_status": "pending_export_mapping",
-      "data_origin": "customer_confirmed_process"
+    "business_value": {
+      "selling_points": [
+        "100%阿拉比卡",
+        "巧克力、烤坚果、焦糖方向",
+        "适合作为门店稳定的奶咖基础拼配"
+      ],
+      "priority_order": [
+        "奶咖中目标风味清晰且酸不过界",
+        "100%阿拉比卡",
+        "批次与供应可执行",
+        "加权生豆成本不超过边界"
+      ]
     },
-    {
-      "data_object": "生豆批次、库存和成本",
-      "source_ref": "ds-erp",
-      "observed_source": "金蝶ERP存在",
-      "connection_status": "planned",
-      "field_mapping_status": "pending_connector_and_fields",
-      "data_origin": "customer_confirmed_process"
-    },
-    {
-      "data_object": "来料检验",
-      "source_ref": "ds-incoming-inspect",
-      "observed_source": "电子表格/纸质/分散记录",
-      "connection_status": "manual",
-      "field_mapping_status": "pending_metric_and_unit_mapping",
-      "data_origin": "customer_confirmed_process"
-    },
-    {
-      "data_object": "色值与设备数据",
-      "source_ref": "ds-colorimeter-and-equipment",
-      "observed_source": "仪器读数和设备端数据可输出",
-      "connection_status": "manual_or_planned",
-      "field_mapping_status": "pending_interface_and_calibration_mapping",
-      "data_origin": "customer_confirmed_process"
-    }
-  ],
-  "requirement_spec": {
-    "data_origin": "synthetic_case",
-    "requirement_id": "LY-SYN-REQ-001",
-    "version": "v1",
-    "requirement_version": "LY-SYN-REQ-001-v1",
-    "confirmation_status": "confirmed_for_formula_design",
-    "source_record_ref": "LY-SYN-REQ-RECORD-001",
-    "customer_ref": "LY-SYN-CUSTOMER-A",
-    "product_form": "熟豆拼配小样",
-    "use_scenario": "奶咖为主的连锁门店",
-    "channel": "连锁门店",
-    "target_sensory": {
-      "scale": {
-        "name": "LY-SYN-5-point-descriptive-scale",
-        "min": 1,
-        "max": 5,
-        "higher_is_more": true
+    "sensory_target": {
+      "scale": "0-5 descriptive intensity",
+      "numeric_ranges_in_milk_context": {
+        "chocolate": {"min": 4.0, "max": 5.0},
+        "roasted_nut": {"min": 3.5, "max": 4.5},
+        "caramel": {"min": 3.0, "max": 4.5},
+        "acidity": {"min": 1.0, "max": 2.5},
+        "sweetness": {"min": 3.0, "max": 4.5},
+        "body": {"min": 3.5, "max": 5.0}
       },
-      "dimensions": {
-        "acidity": {"target": 2, "tolerance": 1},
-        "sweetness": {"target": 4, "tolerance": 1},
-        "body": {"target": 4, "tolerance": 1}
+      "supporting_descriptors": {
+        "aroma": ["可可", "烤坚果"],
+        "aftertaste": ["干净", "中长"],
+        "bitterness_range": {"min": 2.0, "max": 3.5}
       },
-      "desired_flavor_tags": ["chocolate", "nut", "caramel"],
-      "tag_normalization": {"dark_chocolate": "chocolate"}
+      "forbidden_or_failure": [
+        {"attribute": "fermented", "condition": "intensity >= 2.0"},
+        {"attribute": "floral_dominant", "condition": "intensity >= 2.5"},
+        {"attribute": "burnt", "condition": "any clearly identifiable occurrence"}
+      ]
     },
-    "selling_points": [],
-    "selling_points_status": "NO_DATA",
     "cost_boundary": {
-      "value": 48,
+      "max": 50.0,
       "currency": "CNY",
       "unit": "kg_green",
-      "cost_scope": "green_bean_weighted_material_cost_only",
-      "valid_at": "2026-08-24"
+      "scope": "weighted_green_bean_cost_only",
+      "excluded": ["烘焙损耗", "人工", "能耗", "包装", "物流", "毛利"]
     },
-    "trial_quantity": {"value": 2, "unit": "kg"},
-    "trial_equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-A",
+    "trial_quantity_per_sample": {"value": 2.0, "unit": "kg_green"},
+    "max_first_round_samples": 6,
     "due_date": "2026-09-05",
-    "due_date_effect_on_formula": "not_used_in_this_case",
-    "packaging_context": "not_in_scope_before_trial",
-    "decision_role": "配方责任人"
+    "final_human_role": "乐饮配方责任人"
   },
   "benchmark_analysis": null,
-  "historical_formula_evidence": [
+  "historical_trials": [
     {
-      "data_origin": "synthetic_case",
-      "formula_id": "LY-SYN-FML-ESP-014",
-      "version": "v3",
-      "formula_version": "LY-SYN-FML-ESP-014-v3",
-      "formula_code": "LY-SYN-CODE-014",
-      "record_status": "active_internal_reference",
-      "provenance": {
-        "source_system": "LY-SYN-RECIPE-FILE",
-        "formula_record_ref": "LY-SYN-RECIPE-014-v3",
-        "curve_record_ref": "LY-SYN-CURVE-014-v3",
-        "qr_record_ref": "LY-SYN-QR-014-v3"
-      },
-      "applicability": {
-        "product_forms": ["熟豆拼配小样"],
-        "use_scenarios": ["奶咖为主的连锁门店"],
-        "equipment_classes": ["LY-SYN-SAMPLE-ROASTER-CLASS-A"],
-        "valid_from": "2026-05-20",
-        "valid_until": "2027-05-20"
-      },
-      "components": [
-        {"material_id": "LY-SYN-BRA-BC14", "specification_version": "LY-SYN-SPEC-BRA-BC14-v1", "ratio_percent": 50, "unit": "percent"},
-        {"material_id": "LY-SYN-COL-HU12", "specification_version": "LY-SYN-SPEC-COL-HU12-v1", "ratio_percent": 30, "unit": "percent"},
-        {"material_id": "LY-SYN-ETH-74110", "specification_version": "LY-SYN-SPEC-ETH-74110-v1", "ratio_percent": 20, "unit": "percent"}
+      "trial_id": "HIST-018",
+      "data_origin": "模拟数据",
+      "purpose": "连锁门店奶咖基础拼配，目标为巧克力、坚果、低酸和较高醇厚度",
+      "product_and_use": "熟豆拼配；18 g/36 g浓缩液加入240 ml全脂牛奶",
+      "formula": [
+        {"material_family_id": "MAT-BRA-NAT", "ratio_percent": 55},
+        {"material_family_id": "MAT-COL-WASH", "ratio_percent": 30},
+        {"material_family_id": "MAT-GUA-WASH", "ratio_percent": 15}
       ],
-      "process_assumptions": {
-        "roast_degree": "medium-dark",
-        "equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-A",
-        "curve_record_ref": "LY-SYN-CURVE-014-v3"
+      "roast_direction": "medium_dark",
+      "equipment_class": "SAMPLE-ROASTER-A",
+      "expected": {
+        "chocolate": "4.0-4.5",
+        "roasted_nut": "3.5-4.2",
+        "caramel": "3.2-4.0",
+        "risk": "深度增加可能带来焦苦"
       },
-      "validation": {
-        "result_ref": "LY-SYN-TRIAL-014-03",
-        "sample_version": "LY-SYN-SAMPLE-014-03",
-        "recorded_at": "2026-05-20",
-        "methods": ["样品烘焙", "描述性杯测", "色值记录"],
-        "cupping_protocol_ref": "LY-SYN-CUP-PROTOCOL-v1",
-        "actual_sensory": {
-          "scale_ref": "LY-SYN-5-point-descriptive-scale",
-          "acidity": 2,
-          "sweetness": 4,
-          "body": 4,
-          "flavor_tags": ["chocolate", "nut", "caramel"]
-        },
-        "physicochemical_measurements": [
-          {"metric": "roast_color", "value": 48, "unit": "LY-SYN-AGTRON-LIKE", "method_ref": "LY-SYN-COLOR-METHOD-v1"}
-        ],
-        "status": "accepted_for_internal_reference"
-      }
+      "actual_in_milk": {
+        "chocolate": 4.4,
+        "roasted_nut": 4.0,
+        "caramel": 3.6,
+        "acidity": 1.8,
+        "sweetness": 3.5,
+        "body": 4.3,
+        "bitterness": 2.8,
+        "risk_tags": {"fermented": 0.2, "floral_dominant": 0.4, "burnt": 0.0}
+      },
+      "actual_black_descriptors": ["可可", "烤榛果", "焦糖", "中长余韵"],
+      "panel_size": 3,
+      "decision": "accepted_as_internal_reference",
+      "evidence_refs": ["EV-KS-ABC-SOURCING", "EV-KS-CONTROLLED-COMPARE"]
     },
     {
-      "data_origin": "synthetic_case",
-      "formula_id": "LY-SYN-FML-ESP-022",
-      "version": "v2",
-      "formula_version": "LY-SYN-FML-ESP-022-v2",
-      "formula_code": "LY-SYN-CODE-022",
-      "record_status": "active_internal_reference",
-      "provenance": {
-        "source_system": "LY-SYN-RECIPE-FILE",
-        "formula_record_ref": "LY-SYN-RECIPE-022-v2",
-        "curve_record_ref": "LY-SYN-CURVE-022-v2",
-        "qr_record_ref": "LY-SYN-QR-022-v2"
-      },
-      "applicability": {
-        "product_forms": ["熟豆拼配小样"],
-        "use_scenarios": ["奶咖为主的连锁门店"],
-        "equipment_classes": ["LY-SYN-SAMPLE-ROASTER-CLASS-A"],
-        "valid_from": "2026-04-11",
-        "valid_until": "2027-04-11"
-      },
-      "components": [
-        {"material_id": "LY-SYN-BRA-BC14", "specification_version": "LY-SYN-SPEC-BRA-BC14-v1", "ratio_percent": 40, "unit": "percent"},
-        {"material_id": "LY-SYN-COL-HU12", "specification_version": "LY-SYN-SPEC-COL-HU12-v1", "ratio_percent": 35, "unit": "percent"},
-        {"material_id": "LY-SYN-IDN-MD05", "specification_version": "LY-SYN-SPEC-IDN-MD05-v1", "ratio_percent": 25, "unit": "percent"}
+      "trial_id": "HIST-024",
+      "data_origin": "模拟数据",
+      "purpose": "减少物料数并降低供应复杂度",
+      "product_and_use": "熟豆拼配；奶咖",
+      "formula": [
+        {"material_family_id": "MAT-BRA-NAT", "ratio_percent": 60},
+        {"material_family_id": "MAT-COL-WASH", "ratio_percent": 40}
       ],
-      "process_assumptions": {
-        "roast_degree": "medium-dark",
-        "equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-A",
-        "curve_record_ref": "LY-SYN-CURVE-022-v2"
+      "roast_direction": "medium_dark",
+      "equipment_class": "SAMPLE-ROASTER-A",
+      "expected": {
+        "chocolate": "4.0-4.5",
+        "roasted_nut": "3.5-4.2",
+        "caramel": "3.0-4.0"
       },
-      "validation": {
-        "result_ref": "LY-SYN-TRIAL-022-02",
-        "sample_version": "LY-SYN-SAMPLE-022-02",
-        "recorded_at": "2026-04-11",
-        "methods": ["样品烘焙", "描述性杯测", "色值记录"],
-        "cupping_protocol_ref": "LY-SYN-CUP-PROTOCOL-v1",
-        "actual_sensory": {
-          "scale_ref": "LY-SYN-5-point-descriptive-scale",
-          "acidity": 1,
-          "sweetness": 3,
-          "body": 5,
-          "flavor_tags": ["dark_chocolate", "spice", "nut"]
-        },
-        "physicochemical_measurements": [
-          {"metric": "roast_color", "value": 46, "unit": "LY-SYN-AGTRON-LIKE", "method_ref": "LY-SYN-COLOR-METHOD-v1"}
-        ],
-        "status": "accepted_for_internal_reference"
-      }
+      "actual_in_milk": {
+        "chocolate": 4.1,
+        "roasted_nut": 3.8,
+        "caramel": 2.7,
+        "acidity": 1.7,
+        "sweetness": 3.2,
+        "body": 4.1,
+        "bitterness": 3.0,
+        "risk_tags": {"fermented": 0.2, "floral_dominant": 0.2, "burnt": 0.0}
+      },
+      "actual_black_descriptors": ["可可", "烤坚果", "焦糖弱", "尾段略干"],
+      "panel_size": 3,
+      "decision": "needs_revision_for_caramel_and_aftertaste",
+      "evidence_refs": ["EV-THREE-STEP-MATERIAL", "EV-KS-CONTROLLED-COMPARE"]
     },
     {
-      "data_origin": "synthetic_case",
-      "formula_id": "LY-SYN-FML-FLT-009",
-      "version": "v4",
-      "formula_version": "LY-SYN-FML-FLT-009-v4",
-      "formula_code": "LY-SYN-CODE-009",
-      "record_status": "superseded",
-      "superseded_by": "LY-SYN-FML-FLT-009-v5",
-      "provenance": {
-        "source_system": "LY-SYN-RECIPE-FILE",
-        "formula_record_ref": "LY-SYN-RECIPE-009-v4",
-        "curve_record_ref": "LY-SYN-CURVE-009-v4",
-        "qr_record_ref": "LY-SYN-QR-009-v4"
-      },
-      "applicability": {
-        "product_forms": ["手冲单品豆"],
-        "use_scenarios": ["精品手冲门店"],
-        "equipment_classes": ["LY-SYN-SAMPLE-ROASTER-CLASS-B"],
-        "valid_from": "2025-01-01",
-        "valid_until": "2025-12-31"
-      },
-      "components": [
-        {"material_id": "LY-SYN-ETH-74110", "specification_version": "LY-SYN-SPEC-ETH-74110-v1", "ratio_percent": 100, "unit": "percent"}
+      "trial_id": "HIST-031",
+      "data_origin": "模拟数据",
+      "purpose": "增强香气层次，同时保留奶咖厚度",
+      "product_and_use": "熟豆拼配；奶咖",
+      "formula": [
+        {"material_family_id": "MAT-BRA-NAT", "ratio_percent": 45},
+        {"material_family_id": "MAT-COL-WASH", "ratio_percent": 35},
+        {"material_family_id": "MAT-ETH-WASH", "ratio_percent": 20}
       ],
-      "process_assumptions": {
-        "roast_degree": "light",
-        "equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-B",
-        "curve_record_ref": "LY-SYN-CURVE-009-v4"
+      "roast_direction": "medium",
+      "equipment_class": "SAMPLE-ROASTER-A",
+      "expected": {
+        "chocolate": "3.5-4.0",
+        "caramel": "3.0-4.0",
+        "acidity": "2.0-2.8",
+        "risk": "花香可能与奶咖主线冲突"
       },
-      "validation": {
-        "result_ref": "LY-SYN-TRIAL-009-04",
-        "sample_version": "LY-SYN-SAMPLE-009-04",
-        "recorded_at": "2025-06-18",
-        "methods": ["样品烘焙", "描述性杯测"],
-        "cupping_protocol_ref": "LY-SYN-CUP-PROTOCOL-v0",
-        "actual_sensory": {
-          "scale_ref": "LY-SYN-5-point-descriptive-scale",
-          "acidity": 5,
-          "sweetness": 4,
-          "body": 2,
-          "flavor_tags": ["citrus", "floral"]
-        },
-        "physicochemical_measurements": [],
-        "status": "superseded"
-      }
+      "actual_in_milk": {
+        "chocolate": 3.0,
+        "roasted_nut": 2.8,
+        "caramel": 3.1,
+        "acidity": 3.2,
+        "sweetness": 3.8,
+        "body": 3.3,
+        "bitterness": 2.2,
+        "risk_tags": {"fermented": 0.3, "floral_dominant": 3.1, "burnt": 0.0}
+      },
+      "actual_black_descriptors": ["花香", "柑橘", "焦糖", "酸质突出"],
+      "panel_size": 3,
+      "decision": "rejected_for_this_milk_context",
+      "evidence_refs": ["EV-KS-ABC-SOURCING", "EV-WCR-LEXICON"]
     }
   ],
-  "approved_design_rules": [],
-  "current_materials": [
+  "current_material_lots": [
     {
-      "data_origin": "synthetic_case",
-      "material_id": "LY-SYN-BRA-BC14",
-      "specification_version": "LY-SYN-SPEC-BRA-BC14-v1",
-      "origin": "LY-SYN-Brazil-natural-style",
-      "variety": "LY-SYN-VARIETY-BRA",
-      "supplier_ref": "LY-SYN-SUPPLIER-BRA",
-      "batch_id": "LY-SYN-BATCH-BRA-2608-A",
-      "incoming_inspection": {
-        "record_ref": "LY-SYN-IQC-BRA-2608-A",
-        "moisture_percent": 10.8,
-        "admission_status": "released"
-      },
-      "inventory": {
-        "lot_id": "LY-SYN-LOT-BRA-2608-A",
-        "plant": "昆山",
-        "location": "LY-SYN-RD-STORE-A",
-        "available_quantity": 12,
-        "unit": "kg",
-        "status": "released",
-        "inventory_as_of": "2026-08-24T09:00:00+08:00",
-        "record_ref": "LY-SYN-INV-BRA-260824"
-      },
-      "cost": {
-        "value": 39,
-        "currency": "CNY",
-        "unit": "kg_green",
-        "valid_at": "2026-08-24",
-        "record_ref": "LY-SYN-COST-BRA-260824"
-      },
-      "food_safety_screening": {
-        "status": "cleared_for_trial",
-        "record_ref": "LY-SYN-FS-BRA-2608-A"
-      }
+      "material_family_id": "MAT-BRA-NAT",
+      "material_name": "巴西日晒风格阿拉比卡生豆（模拟）",
+      "species": "Arabica",
+      "lot_id": "LOT-BRA-26A",
+      "origin_and_process": "Brazil-style / natural",
+      "incoming_status": "released_for_trial",
+      "inventory": {"available_kg": 25.0, "as_of": "2026-08-24T08:00:00+08:00"},
+      "cost": {"value": 37.5, "currency": "CNY", "unit": "kg_green"},
+      "physical": {"moisture_percent": 10.7, "density_g_per_l": 690},
+      "lot_cupping_descriptors": ["可可", "烤坚果", "低酸", "醇厚"],
+      "synthetic_response_profile": {"chocolate": 4.4, "roasted_nut": 4.3, "caramel": 2.8, "acidity": 1.5, "sweetness": 3.2, "body": 4.5},
+      "risk_tags": {"fermented": 0.4, "floral_dominant": 0.1, "burnt": 0.0},
+      "evidence_ref": "LOT-CUP-BRA-26A"
     },
     {
-      "data_origin": "synthetic_case",
-      "material_id": "LY-SYN-COL-HU12",
-      "specification_version": "LY-SYN-SPEC-COL-HU12-v1",
-      "origin": "LY-SYN-Colombia-washed-style",
-      "variety": "LY-SYN-VARIETY-COL",
-      "supplier_ref": "LY-SYN-SUPPLIER-COL",
-      "batch_id": "LY-SYN-BATCH-COL-2608-B",
-      "incoming_inspection": {
-        "record_ref": "LY-SYN-IQC-COL-2608-B",
-        "moisture_percent": 10.6,
-        "admission_status": "released"
-      },
-      "inventory": {
-        "lot_id": "LY-SYN-LOT-COL-2608-B",
-        "plant": "昆山",
-        "location": "LY-SYN-RD-STORE-A",
-        "available_quantity": 8,
-        "unit": "kg",
-        "status": "released",
-        "inventory_as_of": "2026-08-24T09:00:00+08:00",
-        "record_ref": "LY-SYN-INV-COL-260824"
-      },
-      "cost": {
-        "value": 48,
-        "currency": "CNY",
-        "unit": "kg_green",
-        "valid_at": "2026-08-24",
-        "record_ref": "LY-SYN-COST-COL-260824"
-      },
-      "food_safety_screening": {
-        "status": "cleared_for_trial",
-        "record_ref": "LY-SYN-FS-COL-2608-B"
-      }
+      "material_family_id": "MAT-COL-WASH",
+      "material_name": "哥伦比亚水洗风格阿拉比卡生豆（模拟）",
+      "species": "Arabica",
+      "lot_id": "LOT-COL-26B",
+      "origin_and_process": "Colombia-style / washed",
+      "incoming_status": "released_for_trial",
+      "inventory": {"available_kg": 15.0, "as_of": "2026-08-24T08:00:00+08:00"},
+      "cost": {"value": 48.0, "currency": "CNY", "unit": "kg_green"},
+      "physical": {"moisture_percent": 10.5, "density_g_per_l": 715},
+      "lot_cupping_descriptors": ["焦糖", "甜感", "平衡", "柑橘酸"],
+      "synthetic_response_profile": {"chocolate": 2.8, "roasted_nut": 3.0, "caramel": 4.5, "acidity": 3.0, "sweetness": 4.5, "body": 3.2},
+      "risk_tags": {"fermented": 0.1, "floral_dominant": 0.5, "burnt": 0.0},
+      "evidence_ref": "LOT-CUP-COL-26B"
     },
     {
-      "data_origin": "synthetic_case",
-      "material_id": "LY-SYN-ETH-74110",
-      "specification_version": "LY-SYN-SPEC-ETH-74110-v1",
-      "origin": "LY-SYN-Ethiopia-washed-style",
-      "variety": "LY-SYN-VARIETY-ETH",
-      "supplier_ref": "LY-SYN-SUPPLIER-ETH",
-      "batch_id": "LY-SYN-BATCH-ETH-2608-C",
-      "incoming_inspection": {
-        "record_ref": "LY-SYN-IQC-ETH-2608-C",
-        "moisture_percent": 10.4,
-        "admission_status": "released"
-      },
-      "inventory": {
-        "lot_id": "LY-SYN-LOT-ETH-2608-C",
-        "plant": "昆山",
-        "location": "LY-SYN-RD-STORE-A",
-        "available_quantity": 2,
-        "unit": "kg",
-        "status": "released",
-        "inventory_as_of": "2026-08-24T09:00:00+08:00",
-        "record_ref": "LY-SYN-INV-ETH-260824"
-      },
-      "cost": {
-        "value": 62,
-        "currency": "CNY",
-        "unit": "kg_green",
-        "valid_at": "2026-08-24",
-        "record_ref": "LY-SYN-COST-ETH-260824"
-      },
-      "food_safety_screening": {
-        "status": "cleared_for_trial",
-        "record_ref": "LY-SYN-FS-ETH-2608-C"
-      }
+      "material_family_id": "MAT-GUA-WASH",
+      "material_name": "危地马拉水洗风格阿拉比卡生豆（模拟）",
+      "species": "Arabica",
+      "lot_id": "LOT-GUA-26C",
+      "origin_and_process": "Guatemala-style / washed",
+      "incoming_status": "released_for_trial",
+      "inventory": {"available_kg": 0.2, "as_of": "2026-08-24T08:00:00+08:00"},
+      "cost": {"value": 58.0, "currency": "CNY", "unit": "kg_green"},
+      "physical": {"moisture_percent": 10.6, "density_g_per_l": 725},
+      "lot_cupping_descriptors": ["可可", "烘烤香", "焦糖", "圆润"],
+      "synthetic_response_profile": {"chocolate": 4.1, "roasted_nut": 4.0, "caramel": 3.7, "acidity": 2.3, "sweetness": 3.7, "body": 4.0},
+      "risk_tags": {"fermented": 0.2, "floral_dominant": 0.3, "burnt": 0.0},
+      "sourcing": {"existing_supplier": true, "lead_time_days": 7, "minimum_order_kg": 10},
+      "evidence_ref": "LOT-CUP-GUA-26C"
     },
     {
-      "data_origin": "synthetic_case",
-      "material_id": "LY-SYN-IDN-MD05",
-      "specification_version": "LY-SYN-SPEC-IDN-MD05-v1",
-      "origin": "LY-SYN-Indonesia-wet-hulled-style",
-      "variety": "LY-SYN-VARIETY-IDN",
-      "supplier_ref": "LY-SYN-SUPPLIER-IDN",
-      "batch_id": "LY-SYN-BATCH-IDN-2608-D",
-      "incoming_inspection": {
-        "record_ref": "LY-SYN-IQC-IDN-2608-D",
-        "moisture_percent": 10.9,
-        "admission_status": "released"
-      },
-      "inventory": {
-        "lot_id": "LY-SYN-LOT-IDN-2608-D",
-        "plant": "昆山",
-        "location": "LY-SYN-RD-STORE-A",
-        "available_quantity": 0,
-        "unit": "kg",
-        "status": "blocked",
-        "inventory_as_of": "2026-08-24T09:00:00+08:00",
-        "record_ref": "LY-SYN-INV-IDN-260824"
-      },
-      "cost": {
-        "value": 43,
-        "currency": "CNY",
-        "unit": "kg_green",
-        "valid_at": "2026-08-24",
-        "record_ref": "LY-SYN-COST-IDN-260824"
-      },
-      "food_safety_screening": {
-        "status": "cleared_for_trial",
-        "record_ref": "LY-SYN-FS-IDN-2608-D"
-      }
+      "material_family_id": "MAT-HND-WASH",
+      "material_name": "洪都拉斯水洗风格阿拉比卡生豆（模拟）",
+      "species": "Arabica",
+      "lot_id": "LOT-HND-26D",
+      "origin_and_process": "Honduras-style / washed",
+      "incoming_status": "released_for_trial",
+      "inventory": {"available_kg": 10.0, "as_of": "2026-08-24T08:00:00+08:00"},
+      "cost": {"value": 45.0, "currency": "CNY", "unit": "kg_green"},
+      "physical": {"moisture_percent": 10.8, "density_g_per_l": 705},
+      "lot_cupping_descriptors": ["牛奶巧克力", "坚果", "焦糖", "中等醇厚"],
+      "synthetic_response_profile": {"chocolate": 3.8, "roasted_nut": 3.9, "caramel": 3.6, "acidity": 2.2, "sweetness": 3.8, "body": 3.7},
+      "risk_tags": {"fermented": 0.2, "floral_dominant": 0.2, "burnt": 0.0},
+      "approved_substitution_for": ["MAT-GUA-WASH"],
+      "substitution_limit_percent": 20,
+      "evidence_ref": "LOT-CUP-HND-26D"
+    },
+    {
+      "material_family_id": "MAT-ETH-WASH",
+      "material_name": "埃塞俄比亚水洗风格阿拉比卡生豆（模拟）",
+      "species": "Arabica",
+      "lot_id": "LOT-ETH-26E",
+      "origin_and_process": "Ethiopia-style / washed",
+      "incoming_status": "released_for_trial",
+      "inventory": {"available_kg": 8.0, "as_of": "2026-08-24T08:00:00+08:00"},
+      "cost": {"value": 55.0, "currency": "CNY", "unit": "kg_green"},
+      "physical": {"moisture_percent": 10.4, "density_g_per_l": 735},
+      "lot_cupping_descriptors": ["花香", "柑橘", "茶感", "较高酸度"],
+      "synthetic_response_profile": {"chocolate": 1.5, "roasted_nut": 1.8, "caramel": 2.5, "acidity": 4.5, "sweetness": 4.0, "body": 2.4},
+      "risk_tags": {"fermented": 0.2, "floral_dominant": 4.2, "burnt": 0.0},
+      "evidence_ref": "LOT-CUP-ETH-26E"
     }
   ],
-  "trial_equipment": [
+  "decision_knowledge": [
     {
-      "data_origin": "synthetic_case",
-      "equipment_id": "LY-SYN-EQ-SAMPLE-A",
-      "equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-A",
-      "plant": "昆山",
-      "scale": "sample",
-      "availability_status": "available_for_trial",
-      "status_record_ref": "LY-SYN-EQ-STATUS-A-260824",
-      "calibration_record_ref": "LY-SYN-EQ-CAL-A-260801"
+      "knowledge_id": "DK-LEYIN-MATERIAL-THREE-STEPS",
+      "type": "客户事实",
+      "status": "confirmed_process",
+      "rule": "选择原料时依次说明价值或卖点、价格边界、最终用途",
+      "applies_when": "所有配方候选",
+      "source_ref": "EV-THREE-STEP-MATERIAL"
+    },
+    {
+      "knowledge_id": "DK-LEYIN-ABC",
+      "type": "客户事实",
+      "status": "confirmed_process",
+      "rule": "数据足够时提出A/B/C不同方案，再通过实验比较",
+      "applies_when": "打样前方案设计",
+      "source_ref": "EV-KS-ABC-SOURCING"
+    },
+    {
+      "knowledge_id": "DK-LEYIN-MISSING-MATERIAL",
+      "type": "客户事实",
+      "status": "confirmed_process",
+      "rule": "研发库缺目标物料时先向已有合作供应商寻源，无货再进入新供应商开发",
+      "applies_when": "设计方向有价值但当前试验库存不足",
+      "source_ref": "EV-KS-ABC-SOURCING"
+    },
+    {
+      "knowledge_id": "DK-LEYIN-EXPECTED-ACTUAL",
+      "type": "客户事实",
+      "status": "confirmed_process",
+      "rule": "每次实验记录预期、实际和偏差，形成后续可检索标签",
+      "applies_when": "所有打样和复盘",
+      "source_ref": "EV-KS-ABC-SOURCING"
+    },
+    {
+      "knowledge_id": "DK-CVA-SEPARATION",
+      "type": "行业知识",
+      "status": "usable_reference_not_customer_adopted",
+      "rule": "把描述性结果与偏好或市场适配判断分开记录",
+      "applies_when": "感官试验设计和结果汇总",
+      "source_ref": "EV-SCA-CVA"
+    },
+    {
+      "knowledge_id": "DK-WCR-DESCRIPTORS",
+      "type": "行业知识",
+      "status": "usable_reference_not_customer_adopted",
+      "rule": "描述词必须有共同定义和强度标尺，不能用词汇本身替代质量判断",
+      "applies_when": "描述性评价",
+      "source_ref": "EV-WCR-LEXICON"
     }
   ],
-  "business_rules": [
-    {
-      "rule_id": "LY-SYN-RULE-REQ-VERSION-v1",
-      "data_origin": "synthetic_case",
-      "severity": "hard",
-      "criterion": "主入口必须有唯一版本、确认状态和来源记录",
-      "method": "check_required_fields",
-      "required_fields": ["requirement_spec.requirement_version", "requirement_spec.confirmation_status", "requirement_spec.source_record_ref"]
+  "trial_resources": {
+    "equipment": {
+      "equipment_id": "KS-SAMPLE-ROASTER-A-SYN",
+      "equipment_class": "SAMPLE-ROASTER-A",
+      "availability": "available",
+      "calibration_ref": "SYN-CAL-20260801",
+      "allowed_roast_directions": ["medium", "medium_dark"]
     },
-    {
-      "rule_id": "LY-SYN-RULE-EVIDENCE-APPLICABILITY-v1",
-      "data_origin": "synthetic_case",
-      "severity": "hard",
-      "criterion": "历史配方的形态、场景、设备、规格、验证状态、有效期和替代状态必须适用",
-      "method": "all_applicability_dimensions_must_pass",
-      "required_fields": ["historical_formula_evidence.applicability", "historical_formula_evidence.validation", "historical_formula_evidence.record_status"]
+    "protocol": {
+      "protocol_id": "LY-SYN-CUP-MILK-v1",
+      "panelists": 3,
+      "panelist_requirement": "经内部授权且能稳定辨识目标属性",
+      "blind_code": "三位随机码",
+      "order": "每位评价人的样品顺序独立随机",
+      "black_context": {
+        "purpose": "描述性评价",
+        "grind_setting_ref": "GRIND-SYN-01",
+        "water_ref": "WATER-SYN-01",
+        "water_temperature_c": 93,
+        "brew_ratio": "1:16.67"
+      },
+      "milk_context": {
+        "purpose": "客户使用场景适配与偏好判断",
+        "dose_g": 18,
+        "espresso_yield_g": 36,
+        "milk_ml": 240,
+        "milk_type": "全脂牛奶",
+        "beverage_size_ml": 300
+      },
+      "fixed_records": [
+        "formula_and_lot",
+        "green_input_weight",
+        "equipment_id",
+        "roast_curve_or_key_parameters",
+        "environment",
+        "rest_time",
+        "grind_water_temperature_and_brew",
+        "panelist_raw_scores",
+        "descriptive_summary",
+        "milk_preference",
+        "expected_actual_delta",
+        "human_decision"
+      ]
     },
-    {
-      "rule_id": "LY-SYN-RULE-RATIO-v1",
-      "data_origin": "synthetic_case",
-      "severity": "hard",
-      "criterion": "每个组分比例大于0，比例合计为100%，容差0.01个百分点",
-      "method": "sum_ratio_percent",
-      "required_fields": ["candidate.components.ratio_percent"]
+    "synthetic_roast_adjustments": {
+      "medium": {"chocolate": 0.0, "roasted_nut": 0.0, "caramel": 0.0, "acidity": 0.0, "sweetness": 0.0, "body": 0.0, "bitterness": 0.0, "floral_dominant": 0.0},
+      "medium_dark": {"chocolate": 0.3, "roasted_nut": 0.2, "caramel": 0.1, "acidity": -0.3, "sweetness": -0.2, "body": 0.3, "bitterness": 0.5, "floral_dominant": -0.3}
     },
-    {
-      "rule_id": "LY-SYN-RULE-MATERIAL-RELEASE-v1",
-      "data_origin": "synthetic_case",
-      "severity": "hard",
-      "criterion": "当前物料规格必须与候选一致，来料准入和库存状态均为released，食品安全筛查为cleared_for_trial",
-      "method": "exact_spec_and_status_match",
-      "required_fields": ["current_materials.specification_version", "current_materials.incoming_inspection.admission_status", "current_materials.inventory.status", "current_materials.food_safety_screening.status"]
-    },
-    {
-      "rule_id": "LY-SYN-RULE-INVENTORY-v1",
-      "data_origin": "synthetic_case",
-      "severity": "hard",
-      "criterion": "库存快照不晚于运行截止时点且最大时效24小时；每个物料可用量必须覆盖试验需求量",
-      "method": "check_snapshot_age_and_quantity",
-      "max_snapshot_age_hours": 24,
-      "required_fields": ["run_request.evaluation_as_of", "current_materials.inventory.inventory_as_of", "current_materials.inventory.available_quantity", "requirement_spec.trial_quantity"]
-    },
-    {
-      "rule_id": "LY-SYN-RULE-COST-v1",
-      "data_origin": "synthetic_case",
-      "severity": "hard",
-      "criterion": "同一CNY/kg_green口径的加权生豆成本不得超过48.00",
-      "method": "weighted_sum_lte_limit",
-      "required_fields": ["requirement_spec.cost_boundary", "current_materials.cost", "candidate.components.ratio_percent"]
-    },
-    {
-      "rule_id": "LY-SYN-RULE-EQUIPMENT-v1",
-      "data_origin": "synthetic_case",
-      "severity": "hard",
-      "criterion": "本次试验设备类别必须与历史适用类别一致且状态为available_for_trial",
-      "method": "equipment_class_and_availability_match",
-      "required_fields": ["requirement_spec.trial_equipment_class", "historical_formula_evidence.applicability.equipment_classes", "trial_equipment.availability_status"]
-    },
-    {
-      "rule_id": "LY-SYN-RULE-AUTHORITY-v1",
-      "data_origin": "synthetic_case",
-      "severity": "hard",
-      "criterion": "Agent只能给出进入小样建议，最终决定必须等待配方责任人",
-      "method": "output_state_and_claim_check",
-      "required_fields": ["run_request.final_human_role"]
-    }
-  ],
-  "decision_preferences": {
-    "data_origin": "synthetic_case",
-    "preference_version": "LY-SYN-PREF-FORMULA-OWNER-v1",
-    "applicable_role": "配方责任人",
-    "instructions": "只用于全部硬Gate通过后的逐维比较，不生成综合分，不覆盖BLOCKED或UNKNOWN",
-    "ordered_dimensions": [
-      "历史目标风味贴合",
-      "证据适用性与充分度",
-      "当前批次和供应风险",
-      "生豆成本余量",
-      "卖点证据",
-      "小样验证不确定性"
-    ]
+    "synthetic_milk_context_adjustments": {"chocolate": -0.2, "roasted_nut": -0.2, "caramel": -0.1, "acidity": -0.4, "sweetness": 0.0, "body": -0.1}
   }
 }

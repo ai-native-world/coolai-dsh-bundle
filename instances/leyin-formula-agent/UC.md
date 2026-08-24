@@ -1,334 +1,235 @@
-# 乐饮 UC-RD-001｜配方方案确定
+# 乐饮 UC-RD-001｜熟豆拼配研发初稿与打样设计
 
-把本文和一份符合本文输入合同的 JSON 交给任意 Agent，即可执行本 UC。执行 Agent 不得读取 `ACCEPTANCE.md`，也不得自行补充输入之外的业务事实。
+把本文和一份符合本文输入合同的数据文件交给没有任何前置上下文的 Agent，即可执行本 UC。
 
-## 1. 任务
+执行 Agent 的职责不是从库存里挑一个旧配方，而是代替配方师完成打样前最耗时的案头研发：理解需求，调用历史实验和专业知识，提出有差异的 A/B/C 方案，预测每个方案为什么可能有效、哪里可能失败，并设计最少但足以证伪这些预测的打样实验。
 
-根据已确认、带版本的客户需求或标样分析，在指定时点内读取：
+最终产物是一份供配方责任人审阅的《配方研发建议单》。所有感官结果在实际打样前都只是预测，不得写成已验证事实。
 
-- 历史配方及其实际验证；
-- 当前可用生豆批次、规格、来料准入、食品安全筛查、库存和成本；
-- 本次小样设备；
-- 当前生效的业务规则和人工偏好。
+## 1. 本次 UC 的边界
 
-形成可追溯的配方候选，执行确定性计算和硬约束检查，只把合格候选提交给配方责任人决定是否进入小样。
+### 1.1 起点
 
-本任务的输出是“进入小样的决策材料”，不是新配方发明、客户确认、正式 BOM、量产发布或生产投料授权。
+以下两种入口二选一：
 
-## 2. 运行终态与权限
+- `requirement_driven`：业务已经确认一版客户需求；
+- `benchmark_driven`：客户给出标样，且豆型、理化、感官分析已经完成。
 
-每次执行只能以一个运行终态结束：
+需求必须说清最终产品和使用方式。同样叫“浓郁”，用于黑咖、奶咖、咖啡液、冻干粉的研发目标并不相同；下游用途不是备注，而是方案设计条件。
 
-| 终态 | 使用条件 |
-|---|---|
-| `AWAITING_HUMAN_DECISION` | 至少有一个候选通过全部硬 Gate，等待配方责任人决定 |
-| `NEEDS_INPUT` | 必需输入缺失、冲突、过期或无法验证 |
-| `NEEDS_EXPERT_DESIGN` | 没有可直接复用的历史配方，且没有已批准的设计规则可生成候选 |
-| `NO_ELIGIBLE_CANDIDATE` | 已形成候选，但没有候选通过全部硬 Gate |
+### 1.2 终点
 
-只有输入中 `run_request.final_human_role` 指定的人可以作出：
+配方责任人拿到以下内容后，可以决定：
 
-- `selected_for_trial`：选定进入小样；
-- `needs_revision`：退回修改；
-- `rejected`：不进入小样。
+- 选择哪些候选进入打样；
+- 要求补数据或修改方案；
+- 启动缺失物料的替代或寻源；
+- 拒绝本轮方案。
 
-Agent 只能建议，不能代替人作出以上决定。
+本 UC 不完成客户确认、正式报价、量产 BOM、研转产放大或生产投料。小样机与大生产设备的温度、时间和曲线不能直接等同。
 
-## 3. 输入合同
+### 1.3 权限
 
-输入必须是一个 JSON 对象，并至少包含下列对象：
+Agent 可以设计新候选，不必局限于原样复用历史配方；但只能提出研发假设，不能批准主配方、伪造杯测结果或授权生产。最终决定属于输入中指定的配方责任人。
 
-| 对象 | 必须提供的内容 | 用途 |
+## 2. 输入合同
+
+输入为一个 JSON 对象。字段 ID 使用英文，内容允许中文。至少包含：
+
+| 对象 | 必需内容 | 解决的问题 |
 |---|---|---|
-| `metadata` | `schema_version`、`case_id`、`evidence_mode` | 标识本次运行和事实性质 |
-| `run_request` | `entry_mode`、`primary_entry_ref`、`evaluation_as_of`、`final_human_role` | 冻结入口、截止时点和权限 |
-| `project_context` | 产品范围、业务阶段、UC 标识 | 判断是否属于本 UC |
-| `requirement_spec` 或 `benchmark_analysis` | 唯一主入口、版本、确认状态、来源、产品形态、场景、目标、成本边界、试验量、设备类别 | 定义本次要解决的问题 |
-| `historical_formula_evidence` | 配方版本、状态、适用范围、组分、比例、历史实际验证、有效期、替代关系和来源 | 判断可否直接复用 |
-| `approved_design_rules` | 已批准规则的版本、适用条件、算法和来源；可以为空数组 | 没有可复用历史时形成候选 |
-| `current_materials` | 当前规格与批次、来料准入、食品安全筛查、库存快照和同口径成本 | 把候选绑定到当前真实可执行条件 |
-| `trial_equipment` | 设备 ID、类别、地点、可用状态和校准记录 | 验证小样设备适用性 |
-| `business_rules` | 规则 ID、版本、`hard/soft`、判据、方法和所需字段 | 执行 Gate |
-| `decision_preferences` | 角色、偏好版本、排序维度 | 只对合格候选逐维比较 |
+| `metadata` | Case、版本、事实性质、截止时点 | 本次分析针对哪一个冻结快照 |
+| `project_context` | 客户、工厂、研发阶段、UC 边界 | 防止把熟豆拼配写成咖啡液或量产配方 |
+| `request` | 入口、产品形态、最终用途、消费方式、卖点、价格、感官目标、禁忌、打样上限、责任人 | 到底要解决什么业务问题 |
+| `benchmark_analysis` | 标样分析；非标样入口可为 `null` | 标样路线的拆解依据 |
+| `historical_trials` | 历史配方、烘焙条件、测试方法、预期、实际、结论、适用范围 | 少走重复弯路，并学习“预期为什么落空” |
+| `current_material_lots` | 当前批次的品种/产地/处理法、批次感官、理化、准入、库存、成本、供应状态 | 让方案绑定到当前批次，不把品名当成稳定事实 |
+| `decision_knowledge` | 有来源、适用条件和状态的客户经验或行业知识 | 把老师傅判断和外部专业知识变成可调用规则 |
+| `trial_resources` | 小样设备、可用工艺、测试协议、评价人数、下游冲煮或奶咖条件 | 让打样计划真的能执行和比较 |
 
-入口规则：
+缺少字段时不要立刻把整份任务判死。先判断它影响的是哪一层：
 
-- `entry_mode=requirement_driven` 时，`primary_entry_ref` 必须唯一指向 `requirement_spec.requirement_version`，`benchmark_analysis` 应为 `null`。
-- `entry_mode=benchmark_driven` 时，`primary_entry_ref` 必须唯一指向已确认版本的 `benchmark_analysis`，`requirement_spec` 应为 `null` 或只作为明确标注的补充约束。
-- 两个入口同时为主、均为空、版本不匹配或确认状态不满足规则时，终止为 `NEEDS_INPUT`。
-- 输入中声明但未参与本次判断的软字段写 `NO_DATA` 或“不参与本次判断”，不得猜测。
+- 无法理解客户目标：停止方案设计，输出 `NEEDS_INPUT`；
+- 仍可设计但无法直接打样：保留候选，标为 `DESIGN_READY_SOURCE_REQUIRED` 或 `DESIGN_READY_DATA_REQUIRED`；
+- 仅影响预测精度：继续设计，明确不确定项和需要用哪次实验消除。
 
-## 4. 事实与证据规则
+## 3. 事实、知识与假设必须分开
 
-1. 只使用输入 JSON 中的事实；`external_access_allowed=false` 时禁止上网补值。
-2. 每个事实必须保留 `data_origin`：
-   - `customer_confirmed_process`：只证明客户确认过流程、对象或字段存在；
-   - `customer_record`：客户记录中的业务值；
-   - `synthetic_case`：仅用于模拟和回放的值。
-3. `evidence_mode` 含 synthetic 或本次关键业务值来自 `synthetic_case` 时，结论必须明确写“合成回放”，不得称为客户真实结果。
-4. 历史验证只证明历史样品在历史条件下的实际结果，不等于当前批次的小样结果。
-5. 数据源存在、可导出或计划连接，不等于字段已经映射或数据已经接通。
-6. 输入缺少影响资格判断的值时，该 Gate 为 `UNKNOWN`；不得用常识、相似记录、默认值或软偏好补齐。
-7. 所有引用使用输入内的 ID；所有计算展示公式、代入值、单位和结果。
+每一条关键判断都使用以下标签之一：
 
-## 5. 执行工作流
+| 标签 | 含义 | 可以怎么用 |
+|---|---|---|
+| `客户事实` | 乐饮会议、记录或已确认需求中明确存在 | 可作为当前流程和业务约束 |
+| `历史实测` | 某配方、批次、设备、方法下真实记录的结果 | 可作类比，但不能直接当作当前结果 |
+| `行业知识` | 有来源的专业方法或外部知识 | 可帮助生成假设；不得冒充乐饮已确认规则 |
+| `模拟数据` | 本 Case 为演练而造的数据 | 可完整执行和回放；不得称为乐饮真实数值 |
+| `研发假设` | Agent 基于上述证据提出、尚待打样验证的判断 | 必须同时给出证据、风险和验证方法 |
 
-严格按以下顺序执行。前一步终止时，不再继续生成建议。
+规则：
 
-### Step 0｜冻结运行快照
+1. 当前豆批的结果优先于同名物料的旧批次结果；农业原料跨年份、批次可能变化。
+2. 历史配方只有在产品用途、关键目标、原料规格、设备或方法可比时才可直接类比；否则只提取局部经验。
+3. `行业知识` 只能在其适用范围内使用，并保留来源。输入允许联网时可补充权威知识，但新增内容仍标为 `行业知识`。
+4. 描述“有什么风味”和判断“客户是否喜欢或达标”是两件事，不得用一个总分代替。
+5. 不知道就写不知道，并把它变成试验变量；不得把缺值补成貌似精确的数字。
 
-记录 `case_id`、入口及版本、`evaluation_as_of`、证据模式、外部访问权限、最终决策角色。忽略截止时点之后产生的记录。
+## 4. 业务建模方法
 
-### Step 1｜校验启动合同
+### 4.1 先把客户语言翻译成可研发目标
 
-校验第 3 节全部必需对象、唯一主入口、版本、确认状态、来源、产品形态、使用场景、目标量表及容差、成本币种与口径、试验量及单位、设备类别和责任角色。
+按以下顺序理解需求：
 
-存在缺失、冲突、单位不可换算或版本不一致时，列出字段路径和原因，终止为 `NEEDS_INPUT`。
+1. **价值与卖点**：为什么选这些原料，例如产地、100% 阿拉比卡、特定风味或稳定性；
+2. **价格边界**：采用输入声明的成本口径，不把生豆加权成本冒充完整报价；
+3. **最终用途**：黑咖或奶咖、门店或零售、冲煮或下游产品形态；
+4. **感官目标**：香气、风味、余韵、酸、甜、苦、口感或醇厚度及明确禁忌；
+5. **工业与供应约束**：批次、库存、供应风险、设备、交期和后续放大边界。
 
-### Step 2｜筛选可用历史证据
+输出一张“目标翻译表”，逐项列出原话或输入值、研发解释、验收方式和证据 ID。不要把“浓郁”“干净”“适合奶咖”等词原样抄一遍就算完成；必须说明它在本 Case 中如何被观察。
 
-对每条 `historical_formula_evidence` 分别检查：
+### 4.2 再从历史中提取可复用的因果线索
 
-- 配方版本和记录状态；
-- 产品形态、使用场景和设备类别；
-- 每个物料的规格版本；
-- 实际验证的样品版本、方法、状态和记录时间；
-- 生效期、失效期和 `superseded_by`；
-- 来源配方、曲线、验证或二维码记录。
+对每条历史试验回答：
 
-只有全部适用维度通过的历史配方才可进入候选形成。相似名称、相似风味标签或相似度分数不能覆盖任何不适用项。
+- 当时想解决什么；
+- 使用了什么配方和烘焙条件；
+- 预期与实际分别是什么；
+- 哪些条件与本次相同，哪些不同；
+- 本次可复用的是整个配方、某个组分作用、某种烘焙方向，还是一个失败警示。
 
-### Step 3｜形成候选
+“相似度 85%”不是证据。必须把相同点、不同点和适用范围写出来。
 
-候选只能来自两种授权路径：
+### 4.3 形成有意图区别的候选
 
-1. `direct_historical_reuse`：完整复制一条通过 Step 2 的历史配方版本及比例；
-2. `approved_design_rule`：严格执行一条适用且已批准的设计规则，并记录规则版本、输入、计算过程和结果。
+数据足够时形成 A/B/C 三个候选，不能只把同一配方比例挪动几个百分点：
 
-禁止：自行调整比例、拼接不同历史配方、凭经验新增物料、使用未批准的设计逻辑。
+- **A｜稳妥基线**：尽量继承适用历史，降低首轮失败概率；
+- **B｜目标增强**：针对最重要但历史方案不足的目标做明确改动；
+- **C｜成本或供应鲁棒**：在不破坏硬要求的前提下，降低成本、简化物料或减少供应风险。
 
-若两种路径都不能形成候选，终止为 `NEEDS_EXPERT_DESIGN`。
+如果业务事实不支持某一类，说明原因，可少于三个；严禁为了凑数制造伪差异。
 
-### Step 4｜绑定当前物料与设备
+每个候选必须包含：
 
-候选的每个组分必须按 `material_id + specification_version` 精确绑定一条当前物料记录，并绑定其批次、来料准入、食品安全筛查、库存快照和成本记录。设备按 `trial_equipment_class` 精确绑定。
+- 候选 ID 和设计意图；
+- 物料 ID、当前批次或寻源规格、比例，比例合计 100%；
+- 拼配与烘焙策略，以及它为什么适合本次用途；
+- 对目标感官各维度的区间预测，不得只写标签或单点伪精度；
+- 成本计算、库存或供应路径和卖点满足情况；
+- 证据链：每个关键预测对应历史实测或知识 ID；
+- 最大失败风险、目前最不确定的假设、如何在打样中证伪。
 
-未找到、找到多条、规格不一致、记录晚于截止时点或关键字段缺失时，对应 Gate 记为 `UNKNOWN`，不得换用相似物料。
+某个理想物料当前无库存时，不能把整个设计思路直接淘汰。应明确选择：
 
-### Step 5｜执行确定性计算
+- 使用已批准的等效替代；
+- 保留方案并启动原合作供应商寻源；
+- 若原供应商没有，再进入新供应商开发；
+- 或说明为什么不值得寻源并淘汰该候选。
 
-对每个候选计算：
+### 4.4 设计最小充分试验
 
-1. 比例合计：`sum(component.ratio_percent)`。
-2. 各组分试验用量：`trial_quantity_kg × ratio_percent / 100`。
-3. 库存覆盖：比较每个批次的可用量与试验用量，并校验库存快照时效。
-4. 加权生豆成本：`sum(ratio_percent / 100 × material_cost_CNY_per_kg_green)`。
-5. 成本余量：`cost_limit - weighted_green_bean_cost`。
-6. 历史目标差异：对输入中同时存在且量表一致的感官维度计算 `historical_actual - target`；它只是比较证据，不是当前小样实测。
+试验不是“烘一下、杯测一下”。它必须区分候选并校验关键假设：
 
-质量保留 3 位小数；金额保留 2 位小数。不得把加权生豆成本称为完整报价、完整 BOM 成本或毛利。
+1. 设定历史基线或对照样；
+2. 只选择能够回答决策问题的候选和烘焙变量，样数不超过输入上限；
+3. 固定并记录批次、投料、设备、曲线或关键参数、养豆时间、研磨、水、温度、冲煮和奶咖条件；
+4. 样品盲码，评价顺序随机；按输入协议由多名有辨识能力的人独立记录；
+5. 同时记录描述性结果和偏好或适配判断，不把两者混在一起；
+6. 在黑咖标准条件与客户真实饮用场景下分别验证；
+7. 逐项记录“预测—实际—偏差—下一步”，使本次结果能回流为后续知识。
 
-### Step 6｜执行硬 Gate
+## 5. 硬 Gate
 
-对“每个候选 × 每条 `severity=hard` 规则”给出唯一状态：
+Gate 只回答“能否进入下一步”，不负责评价方案有多好。不得把所有质量维度都做成一票否决。
 
-- `PASS`：所需证据齐全且满足判据；
-- `BLOCKED`：证据齐全且明确不满足判据；
-- `UNKNOWN`：关键证据缺失、冲突、过期或无法解析。
+| Gate | 检查时点 | PASS | BLOCKED | NEEDS_DATA 或分支 |
+|---|---|---|---|---|
+| `G0_REQUIREMENT` | 开始设计前 | 入口唯一，产品、用途、关键目标和责任人明确 | 目标相互冲突且无优先级 | 缺失会改变设计方向的信息时停止补充 |
+| `G1_EVIDENCE` | 输出候选前 | 事实、历史、知识和假设分层，每个关键判断可追溯 | 伪造客户事实或把预测写成实测 | 非关键证据不足可继续，但必须列入试验 |
+| `G2_FORMULA` | 输出候选前 | 组分可识别、比例为正且合计 100%，符合硬卖点或禁忌 | 违反 100% 阿拉比卡等硬约束，或比例不闭合 | 规格未定时只能进入寻源或补数分支 |
+| `G3_TRIAL_READINESS` | 进入实际打样前 | 所用批次已准入、数量够、设备可用、协议完整 | 已知安全或准入失败仍要求试用 | 缺料走替代或寻源；缺检验走补检，不等于设计无效 |
+| `G4_AUTHORITY` | 输出决定前 | 只建议进入打样，等待配方责任人 | 声称客户已确认、主配方已批准或可投料 | 无责任人时停止 |
 
-每格必须列出规则 ID、状态、证据 ID/字段路径、计算或理由。任一硬 Gate 为 `BLOCKED` 或 `UNKNOWN`，该候选都不合格。软规则、成本优势和综合评价均不得覆盖硬 Gate。
+## 6. 执行流程
 
-### Step 7｜比较、建议并设计小样验证
+严格按以下顺序执行：
 
-只比较通过全部硬 Gate 的候选。按照 `decision_preferences.ordered_dimensions` 逐维比较，不生成输入未授权的综合分。
+1. **冻结 Case**：记录 Case、截止时点、事实性质、入口和责任人。
+2. **判定范围**：确认这是昆山熟豆拼配初稿；若需求实质是咖啡液、冻干或 RTD 完整配方，只提取上游熟豆子任务并声明下游交接。
+3. **翻译需求**：完成目标翻译表和冲突或缺项检查。
+4. **检索历史与知识**：形成适用性表，特别读取失败实验和预期—实际偏差。
+5. **理解当前豆批**：比较批次感官、理化、成本、库存和供应状态；不把产地名称直接等同于固定风味。
+6. **设计 A/B/C**：按第 4.3 节形成真正不同的方案，并逐项计算比例、试验用量和输入口径下的成本。
+7. **执行设计 Gate**：先剔除违反硬约束的方案；缺料方案转寻源，不得伪装为可立即打样。
+8. **选择首轮组合**：按目标贴合、证据强度、最大风险和信息增益逐维比较。不得用不可解释总分遮蔽取舍。
+9. **设计打样矩阵**：在样数上限内，用对照、盲测和真实饮用场景验证最关键差异。
+10. **提交人审**：输出建议，不代替配方责任人决定。
 
-若有合格候选，说明建议配方责任人优先考虑哪个候选及依据，并输出最小小样验证计划，至少包括：
+## 7. 唯一输出格式
 
-- 使用已绑定的当前批次和指定设备；
-- 记录配方版本、批次、设备、曲线或关键过程参数；
-- 按输入声明的方法记录理化和杯测结果；
-- 将当前实测与目标逐维对照；
-- 记录预期与实际偏差；
-- 不达标时退回 `needs_revision`，不得自动发布。
-
-输入未提供验收阈值时，只能要求“按已声明目标和方法验证”，不能自行发明阈值。
-
-## 6. 最终输出合同
-
-只输出一个合法 JSON 对象。禁止输出 Markdown、代码围栏、解释、思考过程或 JSON 前后的任何字符。JSON 是本次运行的唯一业务产物和唯一验收接口。
-
-顶层只能有以下字段：
+只输出一份 Markdown《配方研发建议单》，不得输出思考过程或 `ACCEPTANCE.md` 内容。正文必须使用以下九个结构，标题不得改名或缺失：
 
 ```text
-schema_version, run, errors, evidence, candidates, decision, trial_plan, authority
+# 配方研发建议单｜<case_id>
+## 1. 本次任务与结论
+## 2. 客户需求的研发翻译
+## 3. 历史证据与本次适用性
+## 4. 当前原料与约束
+## 5. A/B/C 候选方案
+## 6. 候选比较与首轮建议
+## 7. 最小充分打样计划
+## 8. Gate、风险与待人决定
+## 9. 打样后必须回填的记录
 ```
 
-本节列出的字段都是封闭集合：每个对象只能包含本节明确列出的字段，不得增加摘要、解释、置信度或其他自由字段。数组顺序也是合同的一部分：历史证据、候选和组分沿用输入顺序；`hard_gates` 沿用 `business_rules` 顺序；三个候选 ID 集合沿用 `candidates` 顺序；`batch_ids` 沿用推荐候选组分顺序。不得按自然语言偏好重新排序。
+### 第 1 节
 
-### 6.1 `run`
+必须写明：`case_id`、入口、产品或用途、证据性质、运行状态、首轮建议、最终责任人。运行状态只能是：
 
-```json
-{
-  "schema_version": "leyin.formula-decision.v1",
-  "run": {
-    "case_id": "输入 metadata.case_id",
-    "evidence_mode": "输入 metadata.evidence_mode",
-    "entry_mode": "输入 run_request.entry_mode",
-    "primary_entry_ref": "输入 run_request.primary_entry_ref",
-    "evaluation_as_of": "输入 run_request.evaluation_as_of",
-    "status": "AWAITING_HUMAN_DECISION | NEEDS_INPUT | NEEDS_EXPERT_DESIGN | NO_ELIGIBLE_CANDIDATE",
-    "final_human_role": "输入 run_request.final_human_role"
-  }
-}
-```
+- `AWAITING_HUMAN_DECISION`
+- `NEEDS_INPUT`
+- `DESIGN_READY_SOURCE_REQUIRED`
+- `DESIGN_READY_DATA_REQUIRED`
 
-### 6.2 `errors` 与 `evidence`
+### 第 2 节
 
-- `errors` 是数组；每项只能包含 `code` 和 `path`。无错误时必须为 `[]`。`code` 只能使用第 7 节定义的稳定错误码。
-- `evidence.usable_formula_versions` 是可直接复用的历史配方版本数组。
-- `evidence.excluded` 是数组；每项包含 `formula_version` 和 `reasons`。
-- `reasons` 只能使用：`RECORD_INACTIVE`、`PRODUCT_FORM_MISMATCH`、`USE_SCENARIO_MISMATCH`、`EQUIPMENT_CLASS_MISMATCH`、`VALIDATION_INVALID`、`NOT_YET_VALID`、`EXPIRED`、`SUPERSEDED`、`SPECIFICATION_MISMATCH`。
+用表格列出：业务卖点、成本口径、最终用途、感官目标、禁忌、供应或交期约束。每行包含“输入表达、研发解释、如何验收、证据 ID”。
 
-### 6.3 `candidates`
+### 第 3 节
 
-每个候选只能包含：
+逐条列历史试验或知识：相同条件、不同条件、预期、实际、可复用结论、不可外推边界。至少包含一条失败或偏差经验；只罗列成功案例视为未完成。
 
-```json
-{
-  "candidate_id": "候选唯一 ID；直接复用时等于来源 formula_version",
-  "formation_path": "direct_historical_reuse | approved_design_rule",
-  "source_ref": "来源 formula_version 或批准规则版本",
-  "components": [
-    {
-      "material_id": "输入值",
-      "specification_version": "输入值",
-      "ratio_percent": 0,
-      "batch_id": "当前绑定批次；无法绑定时为 null",
-      "trial_quantity_kg": 0,
-      "inventory_available_kg": 0,
-      "inventory_status": "输入值；缺失时为 null",
-      "admission_status": "输入值；缺失时为 null",
-      "safety_status": "输入值；缺失时为 null",
-      "cost_cny_per_kg_green": 0
-    }
-  ],
-  "ratio_sum_percent": 0,
-  "weighted_green_cost_cny_per_kg": 0,
-  "cost_headroom_cny_per_kg": 0,
-  "historical_target_delta": {
-    "scale_ref": "历史验证与当前目标共同使用的量表 ID",
-    "dimensions": {"维度名": 0},
-    "matched_flavor_tags": [],
-    "missing_desired_flavor_tags": []
-  },
-  "hard_gates": [
-    {
-      "rule_id": "输入 business_rules.rule_id",
-      "status": "PASS | BLOCKED | UNKNOWN",
-      "evidence_refs": ["输入内存在的 ID 或 JSON 字段路径"]
-    }
-  ],
-  "eligibility": "ELIGIBLE | BLOCKED | UNKNOWN"
-}
-```
+### 第 4 节
 
-无法计算的数值必须为 `null`，不得填 `0`。直接历史复用候选的组分、规格和比例必须与来源版本逐项完全一致。
+用表格列当前物料批次、拟承担的感官或结构作用、批次证据、成本、库存或供应状态和风险。不得仅列物料名。
 
-历史验证与当前目标量表一致时，`historical_target_delta.dimensions[维度] = historical_actual - target`；标签先使用输入的 `tag_normalization` 归一化，再计算命中和缺失。量表不一致或缺值时，`historical_target_delta` 必须为 `null`。该字段只描述历史差异，不表示当前小样已实测。
+### 第 5 节
 
-`eligibility` 的计算是固定的：
+每个候选使用同一张卡片：设计意图、配方表、烘焙或拼配假设、区间预测、成本、供应路径、证据链、最大风险和证伪方式。每个配方表必须显示比例合计。
 
-- 所有硬 Gate 均为 `PASS` → `ELIGIBLE`；
-- 至少一个 `BLOCKED` → `BLOCKED`；
-- 没有 `BLOCKED` 且至少一个 `UNKNOWN` → `UNKNOWN`。
+### 第 6 节
 
-### 6.4 `decision`
+按维度并排比较，明确首轮要测试哪些候选以及为什么。建议必须基于证据和试验信息增益，而不是“综合来看更优”。
 
-```json
-{
-  "decision": {
-    "eligible_candidate_ids": [],
-    "blocked_candidate_ids": [],
-    "unknown_candidate_ids": [],
-    "recommended_candidate_id": "候选 ID 或 null",
-    "recommendation_reasons": ["ONLY_ELIGIBLE_CANDIDATE | PREFERENCE_DIMENSION_EVIDENCE | NO_ELIGIBLE_CANDIDATE"],
-    "preference_rows": [
-      {
-        "dimension": "输入 decision_preferences.ordered_dimensions 中的值",
-        "candidate_id": "合格候选 ID",
-        "value_status": "EVIDENCED | NO_DATA",
-        "evidence_refs": ["候选字段路径或输入 ID"]
-      }
-    ],
-    "selling_point_strength": "NO_DATA 或输入中可追溯的结构化值"
-  }
-}
-```
+### 第 7 节
 
-三个候选集合必须互斥且并集等于全部 `candidate_id`。推荐候选必须属于 `eligible_candidate_ids`；没有合格候选时必须为 `null`。
+给出样品矩阵、对照、固定条件、变量、盲码或随机化、黑咖评价、真实饮用场景评价、记录表和停止或迭代规则。每个样品都必须对应一个待证伪假设。
 
-`recommendation_reasons` 的取值是确定的：启动前终止或无授权候选来源时为 `[]`；已形成候选但没有合格候选时为 `["NO_ELIGIBLE_CANDIDATE"]`；只有一个合格候选时为 `["ONLY_ELIGIBLE_CANDIDATE"]`；存在多个合格候选并依据偏好选择时为 `["PREFERENCE_DIMENSION_EVIDENCE"]`。
+### 第 8 节
 
-`preference_rows` 必须覆盖“每个合格候选 × 每个 `ordered_dimensions`”，先按候选顺序、再按维度顺序排列。它只能引用已经算出的候选字段或输入证据；没有对应证据时必须为 `NO_DATA`，不得用文字补结论。没有合格候选时必须为 `[]`。
+逐项输出 G0–G4 的状态、证据和后续动作；另列前三大失败风险、不确定项，以及配方责任人必须作出的决定。
 
-### 6.5 `trial_plan`
+### 第 9 节
 
-没有推荐候选时必须为 `null`。有推荐候选时必须包含：
+列出实际配方与批次、曲线或参数、环境与设备、养豆时间、测试条件、各评价人原始记录、描述性汇总、偏好判断、预测偏差、客户反馈和最终决定。禁止只回填一个总分。
 
-```json
-{
-  "candidate_id": "推荐候选 ID",
-  "batch_ids": ["该候选绑定的全部当前批次 ID"],
-  "equipment_id": "当前绑定设备 ID",
-  "required_records": [
-    "formula_version",
-    "material_batches",
-    "equipment_id",
-    "process_curve_or_parameters",
-    "physicochemical_results",
-    "cupping_results",
-    "target_delta",
-    "actual_delta",
-    "human_decision"
-  ],
-  "failure_transition": "needs_revision"
-}
-```
+## 8. 禁止事项
 
-### 6.6 `authority`
-
-该对象必须精确为：
-
-```json
-{
-  "customer_confirmed": false,
-  "formula_approved": false,
-  "production_authorized": false,
-  "human_decision_required": true
-}
-```
-
-## 7. Fail-closed 规则
-
-| 情况 | 错误码 | 必须动作 |
-|---|---|---|
-| 主入口缺失或重复 | `PRIMARY_ENTRY_INVALID` | `NEEDS_INPUT`，停止 |
-| 主入口未确认 | `ENTRY_NOT_CONFIRMED` | `NEEDS_INPUT`，停止 |
-| 必需字段缺失 | `REQUIRED_FIELD_MISSING` | `NEEDS_INPUT`，停止 |
-| 版本不一致 | `VERSION_CONFLICT` | `NEEDS_INPUT`，停止 |
-| 目标量表、成本口径、试验量或单位无法解析 | `UNIT_UNRESOLVED` | `NEEDS_INPUT`，停止 |
-| 历史配方不适用 | 无 | 排除该证据并给出枚举原因，不得据此形成候选 |
-| 无可复用历史且无已批准设计规则 | `NO_AUTHORIZED_CANDIDATE_SOURCE` | `NEEDS_EXPERT_DESIGN`，停止 |
-| 当前物料、批次、来料、库存、成本或设备证据缺失 | 无 | 对应 Gate=`UNKNOWN`，候选不合格 |
-| 任一硬规则明确不满足 | 无 | 对应 Gate=`BLOCKED`，候选不合格 |
-| 所有候选均不合格 | 无 | `NO_ELIGIBLE_CANDIDATE`，不得推荐进入小样 |
-| 至少一个候选全部通过 | 无 | `AWAITING_HUMAN_DECISION`，提交人决定 |
-| 输入要求 Agent 直接批准、发布或投料 | `AUTHORITY_OVERRIDE_REJECTED` | 拒绝越权，保留原运行终态 |
-
-## 8. 调用方式
-
-向执行 Agent 提供本文和输入 JSON，然后只下达：
-
-> 执行 Case `<metadata.case_id>`，只输出最终业务产物。
-
-执行 Agent 不需要知道仓库、Runtime 或验收实现；任何 Runtime 只要能读取两份文件并输出 JSON，就可以运行本 UC。
+- 禁止把旧配方原样搬运当成完成研发；
+- 禁止把无库存等同于配方设计错误；
+- 禁止把合成数据或预测写成乐饮真实结果；
+- 禁止只写酸、甜、醇厚三个数而忽略香气、风味、余韵、苦涩、口感和真实使用场景；
+- 禁止只给一个候选，除非证据不足且明确解释；
+- 禁止只输出 JSON、评分报告或概念性建议；
+- 禁止让执行 Agent 读取独立验收标准；
+- 禁止在没有实际打样、配方责任人和客户确认的情况下声称“配方成功”。
