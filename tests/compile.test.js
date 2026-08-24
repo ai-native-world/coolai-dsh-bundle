@@ -11,7 +11,7 @@ const FUNCS = new Set(['leyin:cost', 'leyin:capacity', 'leyin:decision', 'leyin:
 test('合法合同编译通过', () => {
   const pkg = compile(good, FUNCS)
   assert.equal(pkg.id, 'leyin-dual-quote')
-  assert.equal(pkg.steps.length, 5)
+  assert.equal(pkg.steps.length, 6) // parse/cost/capacity/decision/review/quote
 })
 
 test('A1-1 重复步骤 id → 拒绝', () => {
