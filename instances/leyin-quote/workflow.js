@@ -1,26 +1,56 @@
 /**
- * 乐饮报价 UC · 五步确定性工作流合同（POC 第一个实例）。
- * 需求解析(model) → 成本归集(function) → 产能推演(function) → 报价决策(function+Gate) → 产出报价单(function)。
- * 本文件是"实例数据"，不含任何乐饮硬编码以外的业务配置——引擎插件保持通用。
+ * 乐饮报价 UC · 五步确定性工作流 v0.2（durable 引擎版）。
+ * parse(model) → cost(function) → capacity(function) → decision(function) → quote(function)
+ * Gate 拦截（毛利低于底线 / 交期不可行）转 review(human) 人拍板：
+ * approve → quote；reject → $fail（驳回即新 Run，引用旧 Run 证据）。
  * @module instances/leyin-quote/workflow
  */
 
+const T = {
+  PASS: next => ({ PASS: next, FAIL: '$fail', NEEDS_INPUT: '$wait_input', HUMAN_REQUIRED: '$wait_human' }),
+}
+
 export const contract = {
   id: 'leyin-dual-quote',
-  name: '乐饮双份报价',
+  version: '0.2.0',
+  input_gates: [],
+  output_gates: ['gate-output-quote'],
   inputSchema: {
     type: 'object',
     properties: {
-      inquiry: { type: 'string', description: '客户询价原文（模型解析）' },
-      today: { type: 'string', description: '基准日 YYYY-MM-DD（确定性：交期计算以此为锚）' },
-      materialUnitPrice: { type: 'number', description: '物料单价（元/单位，模拟数据）' },
-      machiningRate: { type: 'number', description: '机台加工费率（元/单位，模拟数据）' },
+      inquiry: { type: 'string', minLength: 1, description: '客户询价原文（模型解析）' },
+      today: { type: 'string', minLength: 1, description: '基准日 YYYY-MM-DD（确定性锚点）' },
+      materialUnitPrice: { type: 'number', minimum: 0, description: '物料单价（元/单位，模拟数据）' },
+      machiningRate: { type: 'number', minimum: 0, description: '机台加工费率（元/单位，模拟数据）' },
       marginTarget: { type: 'number', description: '目标毛利率' },
       marginFloor: { type: 'number', description: '毛利率底线（Gate 阈值）' },
-      lineCapacityDaily: { type: 'integer', description: '产线日产能（单位/天）' },
-      scheduledLoad: { type: 'number', description: '已排产负荷（单位）' },
+      lineCapacityDaily: { type: 'integer', exclusiveMinimum: 0, description: '产线日产能（单位/天）' },
+      scheduledLoad: { type: 'number', minimum: 0, description: '已排产负荷（单位）' },
     },
     required: ['inquiry', 'today', 'materialUnitPrice', 'machiningRate', 'marginTarget', 'marginFloor', 'lineCapacityDaily', 'scheduledLoad'],
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object',
+    properties: {
+      quote: {
+        type: 'object',
+        required: ['quoteId', 'product', 'quantity', 'unitPrice', 'totalPrice', 'dueDate', 'terms', 'knowhowRef'],
+        properties: {
+          quoteId: { type: 'string', minLength: 1 },
+          product: { type: 'string', minLength: 1 },
+          quantity: { type: 'integer', exclusiveMinimum: 0 },
+          unitPrice: { type: 'number' },
+          totalPrice: { type: 'number' },
+          dueDate: { type: 'string', minLength: 1 },
+          terms: { type: 'string', minLength: 1 },
+          knowhowRef: { type: 'string', minLength: 1 },
+        },
+        additionalProperties: false,
+      },
+    },
+    required: ['quote'],
+    additionalProperties: false,
   },
   steps: [
     {
@@ -31,17 +61,20 @@ export const contract = {
       outputKey: 'parse',
       outputSchema: {
         type: 'object',
-        properties: {
-          product: { type: 'string' },
-          quantity: { type: 'integer' },
-          color: { type: 'string' },
-          coating: { type: 'string' },
-          bean: { type: 'string' },
-          dueDate: { type: 'string' },
-        },
         required: ['product', 'quantity', 'color', 'coating', 'bean', 'dueDate'],
+        properties: {
+          product: { type: 'string', minLength: 1 },
+          quantity: { type: 'integer', exclusiveMinimum: 0 },
+          color: { type: 'string', minLength: 1 },
+          coating: { type: 'string', minLength: 1 },
+          bean: { type: 'string', minLength: 1 },
+          dueDate: { type: 'string', minLength: 1 },
+        },
+        additionalProperties: false,
       },
-      transitions: { PASS: 'cost', FAIL: '$fail', NEEDS_INPUT: '$wait_input' },
+      preGates: ['gate-inquiry'],
+      postGates: [],
+      transitions: T.PASS('cost'),
     },
     {
       id: 'cost',
@@ -55,14 +88,17 @@ export const contract = {
       outputKey: 'cost',
       outputSchema: {
         type: 'object',
+        required: ['materialCost', 'machiningCost', 'totalCost'],
         properties: {
           materialCost: { type: 'number' },
           machiningCost: { type: 'number' },
           totalCost: { type: 'number' },
         },
-        required: ['materialCost', 'machiningCost', 'totalCost'],
+        additionalProperties: false,
       },
-      transitions: { PASS: 'capacity', FAIL: '$fail' },
+      preGates: [],
+      postGates: [],
+      transitions: T.PASS('capacity'),
     },
     {
       id: 'capacity',
@@ -78,15 +114,18 @@ export const contract = {
       outputKey: 'capacity',
       outputSchema: {
         type: 'object',
+        required: ['estDays', 'dueDays', 'loadAfter', 'feasible'],
         properties: {
           estDays: { type: 'integer' },
           dueDays: { type: 'integer' },
           loadAfter: { type: 'number' },
           feasible: { type: 'boolean' },
         },
-        required: ['estDays', 'dueDays', 'loadAfter', 'feasible'],
+        additionalProperties: false,
       },
-      transitions: { PASS: 'decision', FAIL: '$fail' },
+      preGates: [],
+      postGates: ['gate-feasible'],
+      transitions: { PASS: 'decision', HUMAN_REQUIRED: 'review', FAIL: '$fail', NEEDS_INPUT: '$wait_input' },
     },
     {
       id: 'decision',
@@ -101,15 +140,40 @@ export const contract = {
       outputKey: 'decision',
       outputSchema: {
         type: 'object',
+        required: ['unitPrice', 'margin', 'marginOk'],
         properties: {
           unitPrice: { type: 'number' },
           margin: { type: 'number' },
           marginOk: { type: 'boolean' },
         },
-        required: ['unitPrice', 'margin', 'marginOk'],
+        additionalProperties: false,
       },
+      preGates: [],
       postGates: ['gate-margin-floor'],
-      transitions: { PASS: 'quote', FAIL_GATE: '$wait_human', FAIL: '$fail' },
+      transitions: { PASS: 'quote', HUMAN_REQUIRED: 'review', FAIL: '$fail', NEEDS_INPUT: '$wait_input' },
+    },
+    {
+      id: 'review',
+      name: '人拍板（超边界承诺）',
+      executor: { kind: 'human', ref: 'human://quote-owner-decision' },
+      input: {
+        draft: '$steps.decision',
+        requirement: '$steps.parse',
+      },
+      outputKey: 'review',
+      outputSchema: {
+        type: 'object',
+        required: ['decision', 'rationale'],
+        properties: {
+          decision: { enum: ['approve', 'reject'] },
+          rationale: { type: 'string', minLength: 1 },
+        },
+        additionalProperties: false,
+      },
+      preGates: [],
+      postGates: ['gate-review-valid'],
+      transitionPath: '$output.decision',
+      transitions: { approve: 'quote', reject: '$fail', FAIL: '$fail' },
     },
     {
       id: 'quote',
@@ -124,16 +188,14 @@ export const contract = {
       outputKey: 'quote',
       outputSchema: {
         type: 'object',
-        properties: { doc: { type: 'object', properties: { quoteId: { type: 'string' } } } },
         required: ['doc'],
+        properties: { doc: { type: 'object' } },
+        additionalProperties: false,
       },
+      preGates: [],
+      postGates: [],
       transitions: { PASS: '$success', FAIL: '$fail' },
     },
   ],
-  outputSchema: {
-    type: 'object',
-    properties: { quote: { type: 'object', properties: { quoteId: { type: 'string' } } } },
-    required: ['quote'],
-  },
   outputMapping: { quote: '$steps.quote.doc' },
 }
