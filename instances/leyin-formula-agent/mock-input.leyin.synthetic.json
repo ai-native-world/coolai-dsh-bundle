@@ -1,0 +1,582 @@
+{
+  "metadata": {
+    "schema_version": "0.2",
+    "case_id": "LY-SYN-FORMULA-REQ-001",
+    "evidence_mode": "leyin_process_grounded_synthetic_values",
+    "customer_numeric_facts": false,
+    "purpose": "在乐饮已确认的业务流程和数据形态下，验证零上下文 Agent 能否形成可靠的配方候选进入小样决策材料",
+    "forbidden_uses": [
+      "乐饮真实配方库",
+      "客户材料",
+      "正式BOM",
+      "正式报价",
+      "真实打样记录",
+      "主配方批准",
+      "量产发布",
+      "生产投料"
+    ]
+  },
+  "run_request": {
+    "execution_mode": "decision_material_only",
+    "entry_mode": "requirement_driven",
+    "primary_entry_ref": "LY-SYN-REQ-001-v1",
+    "evaluation_as_of": "2026-08-24T09:00:00+08:00",
+    "language": "zh-CN",
+    "external_access_allowed": false,
+    "final_human_role": "配方责任人"
+  },
+  "project_context": {
+    "data_origin": "customer_confirmed_process",
+    "customer": "乐饮创新（魔饮咖啡）",
+    "source_repository": "ai-native-world/project-joyins",
+    "source_commit": "91016f9db7d92d985f54ff4d6135e5ff6bb5ad78",
+    "plant_scope": "昆山研发与小样环节",
+    "uc_catalog_id": "UC-RD-001",
+    "project_uc_id": "uc-recipe-match",
+    "uc_name": "配方方案确定",
+    "business_stage": "候选生豆拼配进入小样前",
+    "in_scope_product_forms": ["熟豆拼配小样"],
+    "out_of_scope_product_forms": ["浓缩液复合配方", "RTD调配", "冻干配方", "量产主配方"]
+  },
+  "source_evidence_catalog": [
+    {
+      "evidence_id": "LY-EVID-KS-REQ-AND-BENCHMARK",
+      "data_origin": "customer_confirmed_process",
+      "path": "meeting-notes/2026-07-25-昆山走访.md",
+      "locator": "00:25:48-00:31:02",
+      "supports": [
+        "需求会考虑价格段、风味、卖点、豆种、比例和组合",
+        "可形成A/B/C候选",
+        "入口可以是需求单或客户标样",
+        "标样经豆型、理化和感官杯测分析后打配方与比例"
+      ]
+    },
+    {
+      "evidence_id": "LY-EVID-KS-LEARNING-LOOP",
+      "data_origin": "customer_confirmed_process",
+      "path": "meeting-notes/2026-07-25-昆山走访.md",
+      "locator": "00:27:38-00:28:47",
+      "supports": [
+        "实验应记录预期与实际风味",
+        "历史数据打标后可推荐候选并持续校准"
+      ]
+    },
+    {
+      "evidence_id": "LY-EVID-KS-RECIPE-SOFTWARE",
+      "data_origin": "customer_confirmed_process",
+      "path": "meeting-notes/2026-07-25-昆山走访.md",
+      "locator": "00:41:19-00:42:21、01:24:52",
+      "supports": [
+        "小样软件记录拼配和机器界面/曲线",
+        "二维码可调出记录",
+        "配方电脑中有数据但尚未系统化"
+      ]
+    },
+    {
+      "evidence_id": "LY-EVID-KS-SCALE-UP-BOUNDARY",
+      "data_origin": "customer_confirmed_process",
+      "path": "meeting-notes/2026-07-25-昆山走访.md",
+      "locator": "00:35:31-00:39:00",
+      "supports": [
+        "小机与大机同名温度/时间不能直接等同",
+        "放大参数必须重新验证"
+      ]
+    },
+    {
+      "evidence_id": "LY-EVID-INITIAL-ROLE-OUTPUT",
+      "data_origin": "customer_confirmed_process",
+      "path": "meeting-notes/2026-08-05-AI智能体业务落地应用研讨会.md",
+      "locator": "03:56:42-03:58:31",
+      "supports": [
+        "第一期面向配方人员形成可用初稿",
+        "初稿需读取需求、历史配方、理化、口感、风味评测和当前生豆库存"
+      ]
+    },
+    {
+      "evidence_id": "LY-EVID-HISTORY-REUSE",
+      "data_origin": "customer_confirmed_process",
+      "path": "meeting-notes/2026-07-04-会议文字记录.md",
+      "locator": "03:15:47-03:17:34",
+      "supports": [
+        "相似需求不应重复开发",
+        "历史试验和配方可在适用时优先复用"
+      ]
+    },
+    {
+      "evidence_id": "LY-EVID-BLUEPRINT-UC",
+      "data_origin": "customer_confirmed_process",
+      "path": "blueprint.yaml",
+      "locator": "use_cases[uc-recipe-match]",
+      "supports": [
+        "UC触发、六步流程、候选决策包、人工决定和权限边界"
+      ]
+    }
+  ],
+  "data_readiness_snapshot": [
+    {
+      "data_object": "配方库数据",
+      "source_ref": "ds-recipe-data",
+      "observed_source": "电脑文件/电子表格",
+      "connection_status": "manual",
+      "field_mapping_status": "pending_inventory",
+      "data_origin": "customer_confirmed_process"
+    },
+    {
+      "data_object": "小样烘焙与杯测记录",
+      "source_ref": "ds-recipe-software",
+      "observed_source": "小样烘焙软件与二维码",
+      "connection_status": "manual_file_or_qr",
+      "field_mapping_status": "pending_export_mapping",
+      "data_origin": "customer_confirmed_process"
+    },
+    {
+      "data_object": "生豆批次、库存和成本",
+      "source_ref": "ds-erp",
+      "observed_source": "金蝶ERP存在",
+      "connection_status": "planned",
+      "field_mapping_status": "pending_connector_and_fields",
+      "data_origin": "customer_confirmed_process"
+    },
+    {
+      "data_object": "来料检验",
+      "source_ref": "ds-incoming-inspect",
+      "observed_source": "电子表格/纸质/分散记录",
+      "connection_status": "manual",
+      "field_mapping_status": "pending_metric_and_unit_mapping",
+      "data_origin": "customer_confirmed_process"
+    },
+    {
+      "data_object": "色值与设备数据",
+      "source_ref": "ds-colorimeter-and-equipment",
+      "observed_source": "仪器读数和设备端数据可输出",
+      "connection_status": "manual_or_planned",
+      "field_mapping_status": "pending_interface_and_calibration_mapping",
+      "data_origin": "customer_confirmed_process"
+    }
+  ],
+  "requirement_spec": {
+    "data_origin": "synthetic_case",
+    "requirement_id": "LY-SYN-REQ-001",
+    "version": "v1",
+    "requirement_version": "LY-SYN-REQ-001-v1",
+    "confirmation_status": "confirmed_for_formula_design",
+    "source_record_ref": "LY-SYN-REQ-RECORD-001",
+    "customer_ref": "LY-SYN-CUSTOMER-A",
+    "product_form": "熟豆拼配小样",
+    "use_scenario": "奶咖为主的连锁门店",
+    "channel": "连锁门店",
+    "target_sensory": {
+      "scale": {
+        "name": "LY-SYN-5-point-descriptive-scale",
+        "min": 1,
+        "max": 5,
+        "higher_is_more": true
+      },
+      "dimensions": {
+        "acidity": {"target": 2, "tolerance": 1},
+        "sweetness": {"target": 4, "tolerance": 1},
+        "body": {"target": 4, "tolerance": 1}
+      },
+      "desired_flavor_tags": ["chocolate", "nut", "caramel"],
+      "tag_normalization": {"dark_chocolate": "chocolate"}
+    },
+    "selling_points": [],
+    "selling_points_status": "NO_DATA",
+    "cost_boundary": {
+      "value": 48,
+      "currency": "CNY",
+      "unit": "kg_green",
+      "cost_scope": "green_bean_weighted_material_cost_only",
+      "valid_at": "2026-08-24"
+    },
+    "trial_quantity": {"value": 2, "unit": "kg"},
+    "trial_equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-A",
+    "due_date": "2026-09-05",
+    "due_date_effect_on_formula": "not_used_in_this_case",
+    "packaging_context": "not_in_scope_before_trial",
+    "decision_role": "配方责任人"
+  },
+  "benchmark_analysis": null,
+  "historical_formula_evidence": [
+    {
+      "data_origin": "synthetic_case",
+      "formula_id": "LY-SYN-FML-ESP-014",
+      "version": "v3",
+      "formula_version": "LY-SYN-FML-ESP-014-v3",
+      "formula_code": "LY-SYN-CODE-014",
+      "record_status": "active_internal_reference",
+      "provenance": {
+        "source_system": "LY-SYN-RECIPE-FILE",
+        "formula_record_ref": "LY-SYN-RECIPE-014-v3",
+        "curve_record_ref": "LY-SYN-CURVE-014-v3",
+        "qr_record_ref": "LY-SYN-QR-014-v3"
+      },
+      "applicability": {
+        "product_forms": ["熟豆拼配小样"],
+        "use_scenarios": ["奶咖为主的连锁门店"],
+        "equipment_classes": ["LY-SYN-SAMPLE-ROASTER-CLASS-A"],
+        "valid_from": "2026-05-20",
+        "valid_until": "2027-05-20"
+      },
+      "components": [
+        {"material_id": "LY-SYN-BRA-BC14", "specification_version": "LY-SYN-SPEC-BRA-BC14-v1", "ratio_percent": 50, "unit": "percent"},
+        {"material_id": "LY-SYN-COL-HU12", "specification_version": "LY-SYN-SPEC-COL-HU12-v1", "ratio_percent": 30, "unit": "percent"},
+        {"material_id": "LY-SYN-ETH-74110", "specification_version": "LY-SYN-SPEC-ETH-74110-v1", "ratio_percent": 20, "unit": "percent"}
+      ],
+      "process_assumptions": {
+        "roast_degree": "medium-dark",
+        "equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-A",
+        "curve_record_ref": "LY-SYN-CURVE-014-v3"
+      },
+      "validation": {
+        "result_ref": "LY-SYN-TRIAL-014-03",
+        "sample_version": "LY-SYN-SAMPLE-014-03",
+        "recorded_at": "2026-05-20",
+        "methods": ["样品烘焙", "描述性杯测", "色值记录"],
+        "cupping_protocol_ref": "LY-SYN-CUP-PROTOCOL-v1",
+        "actual_sensory": {
+          "scale_ref": "LY-SYN-5-point-descriptive-scale",
+          "acidity": 2,
+          "sweetness": 4,
+          "body": 4,
+          "flavor_tags": ["chocolate", "nut", "caramel"]
+        },
+        "physicochemical_measurements": [
+          {"metric": "roast_color", "value": 48, "unit": "LY-SYN-AGTRON-LIKE", "method_ref": "LY-SYN-COLOR-METHOD-v1"}
+        ],
+        "status": "accepted_for_internal_reference"
+      }
+    },
+    {
+      "data_origin": "synthetic_case",
+      "formula_id": "LY-SYN-FML-ESP-022",
+      "version": "v2",
+      "formula_version": "LY-SYN-FML-ESP-022-v2",
+      "formula_code": "LY-SYN-CODE-022",
+      "record_status": "active_internal_reference",
+      "provenance": {
+        "source_system": "LY-SYN-RECIPE-FILE",
+        "formula_record_ref": "LY-SYN-RECIPE-022-v2",
+        "curve_record_ref": "LY-SYN-CURVE-022-v2",
+        "qr_record_ref": "LY-SYN-QR-022-v2"
+      },
+      "applicability": {
+        "product_forms": ["熟豆拼配小样"],
+        "use_scenarios": ["奶咖为主的连锁门店"],
+        "equipment_classes": ["LY-SYN-SAMPLE-ROASTER-CLASS-A"],
+        "valid_from": "2026-04-11",
+        "valid_until": "2027-04-11"
+      },
+      "components": [
+        {"material_id": "LY-SYN-BRA-BC14", "specification_version": "LY-SYN-SPEC-BRA-BC14-v1", "ratio_percent": 40, "unit": "percent"},
+        {"material_id": "LY-SYN-COL-HU12", "specification_version": "LY-SYN-SPEC-COL-HU12-v1", "ratio_percent": 35, "unit": "percent"},
+        {"material_id": "LY-SYN-IDN-MD05", "specification_version": "LY-SYN-SPEC-IDN-MD05-v1", "ratio_percent": 25, "unit": "percent"}
+      ],
+      "process_assumptions": {
+        "roast_degree": "medium-dark",
+        "equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-A",
+        "curve_record_ref": "LY-SYN-CURVE-022-v2"
+      },
+      "validation": {
+        "result_ref": "LY-SYN-TRIAL-022-02",
+        "sample_version": "LY-SYN-SAMPLE-022-02",
+        "recorded_at": "2026-04-11",
+        "methods": ["样品烘焙", "描述性杯测", "色值记录"],
+        "cupping_protocol_ref": "LY-SYN-CUP-PROTOCOL-v1",
+        "actual_sensory": {
+          "scale_ref": "LY-SYN-5-point-descriptive-scale",
+          "acidity": 1,
+          "sweetness": 3,
+          "body": 5,
+          "flavor_tags": ["dark_chocolate", "spice", "nut"]
+        },
+        "physicochemical_measurements": [
+          {"metric": "roast_color", "value": 46, "unit": "LY-SYN-AGTRON-LIKE", "method_ref": "LY-SYN-COLOR-METHOD-v1"}
+        ],
+        "status": "accepted_for_internal_reference"
+      }
+    },
+    {
+      "data_origin": "synthetic_case",
+      "formula_id": "LY-SYN-FML-FLT-009",
+      "version": "v4",
+      "formula_version": "LY-SYN-FML-FLT-009-v4",
+      "formula_code": "LY-SYN-CODE-009",
+      "record_status": "superseded",
+      "superseded_by": "LY-SYN-FML-FLT-009-v5",
+      "provenance": {
+        "source_system": "LY-SYN-RECIPE-FILE",
+        "formula_record_ref": "LY-SYN-RECIPE-009-v4",
+        "curve_record_ref": "LY-SYN-CURVE-009-v4",
+        "qr_record_ref": "LY-SYN-QR-009-v4"
+      },
+      "applicability": {
+        "product_forms": ["手冲单品豆"],
+        "use_scenarios": ["精品手冲门店"],
+        "equipment_classes": ["LY-SYN-SAMPLE-ROASTER-CLASS-B"],
+        "valid_from": "2025-01-01",
+        "valid_until": "2025-12-31"
+      },
+      "components": [
+        {"material_id": "LY-SYN-ETH-74110", "specification_version": "LY-SYN-SPEC-ETH-74110-v1", "ratio_percent": 100, "unit": "percent"}
+      ],
+      "process_assumptions": {
+        "roast_degree": "light",
+        "equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-B",
+        "curve_record_ref": "LY-SYN-CURVE-009-v4"
+      },
+      "validation": {
+        "result_ref": "LY-SYN-TRIAL-009-04",
+        "sample_version": "LY-SYN-SAMPLE-009-04",
+        "recorded_at": "2025-06-18",
+        "methods": ["样品烘焙", "描述性杯测"],
+        "cupping_protocol_ref": "LY-SYN-CUP-PROTOCOL-v0",
+        "actual_sensory": {
+          "scale_ref": "LY-SYN-5-point-descriptive-scale",
+          "acidity": 5,
+          "sweetness": 4,
+          "body": 2,
+          "flavor_tags": ["citrus", "floral"]
+        },
+        "physicochemical_measurements": [],
+        "status": "superseded"
+      }
+    }
+  ],
+  "approved_design_rules": [],
+  "current_materials": [
+    {
+      "data_origin": "synthetic_case",
+      "material_id": "LY-SYN-BRA-BC14",
+      "specification_version": "LY-SYN-SPEC-BRA-BC14-v1",
+      "origin": "LY-SYN-Brazil-natural-style",
+      "variety": "LY-SYN-VARIETY-BRA",
+      "supplier_ref": "LY-SYN-SUPPLIER-BRA",
+      "batch_id": "LY-SYN-BATCH-BRA-2608-A",
+      "incoming_inspection": {
+        "record_ref": "LY-SYN-IQC-BRA-2608-A",
+        "moisture_percent": 10.8,
+        "admission_status": "released"
+      },
+      "inventory": {
+        "lot_id": "LY-SYN-LOT-BRA-2608-A",
+        "plant": "昆山",
+        "location": "LY-SYN-RD-STORE-A",
+        "available_quantity": 12,
+        "unit": "kg",
+        "status": "released",
+        "inventory_as_of": "2026-08-24T09:00:00+08:00",
+        "record_ref": "LY-SYN-INV-BRA-260824"
+      },
+      "cost": {
+        "value": 39,
+        "currency": "CNY",
+        "unit": "kg_green",
+        "valid_at": "2026-08-24",
+        "record_ref": "LY-SYN-COST-BRA-260824"
+      },
+      "food_safety_screening": {
+        "status": "cleared_for_trial",
+        "record_ref": "LY-SYN-FS-BRA-2608-A"
+      }
+    },
+    {
+      "data_origin": "synthetic_case",
+      "material_id": "LY-SYN-COL-HU12",
+      "specification_version": "LY-SYN-SPEC-COL-HU12-v1",
+      "origin": "LY-SYN-Colombia-washed-style",
+      "variety": "LY-SYN-VARIETY-COL",
+      "supplier_ref": "LY-SYN-SUPPLIER-COL",
+      "batch_id": "LY-SYN-BATCH-COL-2608-B",
+      "incoming_inspection": {
+        "record_ref": "LY-SYN-IQC-COL-2608-B",
+        "moisture_percent": 10.6,
+        "admission_status": "released"
+      },
+      "inventory": {
+        "lot_id": "LY-SYN-LOT-COL-2608-B",
+        "plant": "昆山",
+        "location": "LY-SYN-RD-STORE-A",
+        "available_quantity": 8,
+        "unit": "kg",
+        "status": "released",
+        "inventory_as_of": "2026-08-24T09:00:00+08:00",
+        "record_ref": "LY-SYN-INV-COL-260824"
+      },
+      "cost": {
+        "value": 48,
+        "currency": "CNY",
+        "unit": "kg_green",
+        "valid_at": "2026-08-24",
+        "record_ref": "LY-SYN-COST-COL-260824"
+      },
+      "food_safety_screening": {
+        "status": "cleared_for_trial",
+        "record_ref": "LY-SYN-FS-COL-2608-B"
+      }
+    },
+    {
+      "data_origin": "synthetic_case",
+      "material_id": "LY-SYN-ETH-74110",
+      "specification_version": "LY-SYN-SPEC-ETH-74110-v1",
+      "origin": "LY-SYN-Ethiopia-washed-style",
+      "variety": "LY-SYN-VARIETY-ETH",
+      "supplier_ref": "LY-SYN-SUPPLIER-ETH",
+      "batch_id": "LY-SYN-BATCH-ETH-2608-C",
+      "incoming_inspection": {
+        "record_ref": "LY-SYN-IQC-ETH-2608-C",
+        "moisture_percent": 10.4,
+        "admission_status": "released"
+      },
+      "inventory": {
+        "lot_id": "LY-SYN-LOT-ETH-2608-C",
+        "plant": "昆山",
+        "location": "LY-SYN-RD-STORE-A",
+        "available_quantity": 2,
+        "unit": "kg",
+        "status": "released",
+        "inventory_as_of": "2026-08-24T09:00:00+08:00",
+        "record_ref": "LY-SYN-INV-ETH-260824"
+      },
+      "cost": {
+        "value": 62,
+        "currency": "CNY",
+        "unit": "kg_green",
+        "valid_at": "2026-08-24",
+        "record_ref": "LY-SYN-COST-ETH-260824"
+      },
+      "food_safety_screening": {
+        "status": "cleared_for_trial",
+        "record_ref": "LY-SYN-FS-ETH-2608-C"
+      }
+    },
+    {
+      "data_origin": "synthetic_case",
+      "material_id": "LY-SYN-IDN-MD05",
+      "specification_version": "LY-SYN-SPEC-IDN-MD05-v1",
+      "origin": "LY-SYN-Indonesia-wet-hulled-style",
+      "variety": "LY-SYN-VARIETY-IDN",
+      "supplier_ref": "LY-SYN-SUPPLIER-IDN",
+      "batch_id": "LY-SYN-BATCH-IDN-2608-D",
+      "incoming_inspection": {
+        "record_ref": "LY-SYN-IQC-IDN-2608-D",
+        "moisture_percent": 10.9,
+        "admission_status": "released"
+      },
+      "inventory": {
+        "lot_id": "LY-SYN-LOT-IDN-2608-D",
+        "plant": "昆山",
+        "location": "LY-SYN-RD-STORE-A",
+        "available_quantity": 0,
+        "unit": "kg",
+        "status": "blocked",
+        "inventory_as_of": "2026-08-24T09:00:00+08:00",
+        "record_ref": "LY-SYN-INV-IDN-260824"
+      },
+      "cost": {
+        "value": 43,
+        "currency": "CNY",
+        "unit": "kg_green",
+        "valid_at": "2026-08-24",
+        "record_ref": "LY-SYN-COST-IDN-260824"
+      },
+      "food_safety_screening": {
+        "status": "cleared_for_trial",
+        "record_ref": "LY-SYN-FS-IDN-2608-D"
+      }
+    }
+  ],
+  "trial_equipment": [
+    {
+      "data_origin": "synthetic_case",
+      "equipment_id": "LY-SYN-EQ-SAMPLE-A",
+      "equipment_class": "LY-SYN-SAMPLE-ROASTER-CLASS-A",
+      "plant": "昆山",
+      "scale": "sample",
+      "availability_status": "available_for_trial",
+      "status_record_ref": "LY-SYN-EQ-STATUS-A-260824",
+      "calibration_record_ref": "LY-SYN-EQ-CAL-A-260801"
+    }
+  ],
+  "business_rules": [
+    {
+      "rule_id": "LY-SYN-RULE-REQ-VERSION-v1",
+      "data_origin": "synthetic_case",
+      "severity": "hard",
+      "criterion": "主入口必须有唯一版本、确认状态和来源记录",
+      "method": "check_required_fields",
+      "required_fields": ["requirement_spec.requirement_version", "requirement_spec.confirmation_status", "requirement_spec.source_record_ref"]
+    },
+    {
+      "rule_id": "LY-SYN-RULE-EVIDENCE-APPLICABILITY-v1",
+      "data_origin": "synthetic_case",
+      "severity": "hard",
+      "criterion": "历史配方的形态、场景、设备、规格、验证状态、有效期和替代状态必须适用",
+      "method": "all_applicability_dimensions_must_pass",
+      "required_fields": ["historical_formula_evidence.applicability", "historical_formula_evidence.validation", "historical_formula_evidence.record_status"]
+    },
+    {
+      "rule_id": "LY-SYN-RULE-RATIO-v1",
+      "data_origin": "synthetic_case",
+      "severity": "hard",
+      "criterion": "每个组分比例大于0，比例合计为100%，容差0.01个百分点",
+      "method": "sum_ratio_percent",
+      "required_fields": ["candidate.components.ratio_percent"]
+    },
+    {
+      "rule_id": "LY-SYN-RULE-MATERIAL-RELEASE-v1",
+      "data_origin": "synthetic_case",
+      "severity": "hard",
+      "criterion": "当前物料规格必须与候选一致，来料准入和库存状态均为released，食品安全筛查为cleared_for_trial",
+      "method": "exact_spec_and_status_match",
+      "required_fields": ["current_materials.specification_version", "current_materials.incoming_inspection.admission_status", "current_materials.inventory.status", "current_materials.food_safety_screening.status"]
+    },
+    {
+      "rule_id": "LY-SYN-RULE-INVENTORY-v1",
+      "data_origin": "synthetic_case",
+      "severity": "hard",
+      "criterion": "库存快照不晚于运行截止时点且最大时效24小时；每个物料可用量必须覆盖试验需求量",
+      "method": "check_snapshot_age_and_quantity",
+      "max_snapshot_age_hours": 24,
+      "required_fields": ["run_request.evaluation_as_of", "current_materials.inventory.inventory_as_of", "current_materials.inventory.available_quantity", "requirement_spec.trial_quantity"]
+    },
+    {
+      "rule_id": "LY-SYN-RULE-COST-v1",
+      "data_origin": "synthetic_case",
+      "severity": "hard",
+      "criterion": "同一CNY/kg_green口径的加权生豆成本不得超过48.00",
+      "method": "weighted_sum_lte_limit",
+      "required_fields": ["requirement_spec.cost_boundary", "current_materials.cost", "candidate.components.ratio_percent"]
+    },
+    {
+      "rule_id": "LY-SYN-RULE-EQUIPMENT-v1",
+      "data_origin": "synthetic_case",
+      "severity": "hard",
+      "criterion": "本次试验设备类别必须与历史适用类别一致且状态为available_for_trial",
+      "method": "equipment_class_and_availability_match",
+      "required_fields": ["requirement_spec.trial_equipment_class", "historical_formula_evidence.applicability.equipment_classes", "trial_equipment.availability_status"]
+    },
+    {
+      "rule_id": "LY-SYN-RULE-AUTHORITY-v1",
+      "data_origin": "synthetic_case",
+      "severity": "hard",
+      "criterion": "Agent只能给出进入小样建议，最终决定必须等待配方责任人",
+      "method": "output_state_and_claim_check",
+      "required_fields": ["run_request.final_human_role"]
+    }
+  ],
+  "decision_preferences": {
+    "data_origin": "synthetic_case",
+    "preference_version": "LY-SYN-PREF-FORMULA-OWNER-v1",
+    "applicable_role": "配方责任人",
+    "instructions": "只用于全部硬Gate通过后的逐维比较，不生成综合分，不覆盖BLOCKED或UNKNOWN",
+    "ordered_dimensions": [
+      "历史目标风味贴合",
+      "证据适用性与充分度",
+      "当前批次和供应风险",
+      "生豆成本余量",
+      "卖点证据",
+      "小样验证不确定性"
+    ]
+  }
+}
