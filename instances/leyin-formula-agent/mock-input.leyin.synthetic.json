@@ -159,6 +159,7 @@
     },
     "trial_quantity_per_sample": {"value": 2.0, "unit": "kg_green"},
     "max_first_round_samples": 6,
+    "sample_count_unit": "一个独立的配方版本与烘焙方向组合形成的物理熟豆样；同一样品的黑咖和奶咖评价不重复计数；本轮新做基线或对照计入上限",
     "due_date": "2026-09-05",
     "final_human_role": "乐饮配方责任人"
   },
