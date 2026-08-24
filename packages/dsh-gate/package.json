@@ -1,7 +1,7 @@
 {
   "name": "@coolai/dsh-gate",
-  "version": "0.1.0",
-  "description": "酷爱 bundle 第一个插件：Gate 骨架（挂载验证；后续扩展前置/步骤/链路 Gate 与人工拍板）",
+  "version": "0.2.0",
+  "description": "DSH UC Gate 注册表：函数式/声明式 Gate，未知 Gate fail-closed",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

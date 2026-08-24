@@ -1,4 +1,14 @@
 # 酷爱 bundle · 确定性 UC 工作流引擎补丁层。
 - insert:
+    - id: storage
+      name: '@deepseek-ai/dsh-storage'
+    - id: storage-json
+      name: '@deepseek-ai/dsh-storage-json'
+      config:
+        root: !!js dshHomePath('storages')
+    - id: storage-domain
+      name: '@deepseek-ai/dsh-storage-domain'
+      config:
+        backend: json
     - id: coolai-uc-workflow
       name: '@coolai/dsh-uc-workflow'

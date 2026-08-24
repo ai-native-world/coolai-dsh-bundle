@@ -75,3 +75,15 @@ test('A1-10 输入引用格式非法 → 拒绝', () => {
   c.steps[1].input = { quantity: 'parse.quantity' }
   assert.throws(() => compile(c, FUNCS), /格式非法/)
 })
+
+test('A1-11 输出字段未映射 → 拒绝', () => {
+  const c = structuredClone(good)
+  c.outputMapping = {}
+  assert.throws(() => compile(c, FUNCS), /输出字段未映射/)
+})
+
+test('A1-12 transitionPath 非枚举或缺分支 → 拒绝', () => {
+  const c = structuredClone(good)
+  c.steps[0].transitionPath = '$output.product'
+  assert.throws(() => compile(c, FUNCS), /必须声明 enum/)
+})
