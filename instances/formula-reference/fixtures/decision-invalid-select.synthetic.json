@@ -1,0 +1,6 @@
+{
+  "actor_role": "配方责任人",
+  "status": "selected_for_trial",
+  "selected_candidate_version": "SYN-CAND-DEC-003-v1",
+  "rationale": "忽略库存阻断直接进入打样。"
+}

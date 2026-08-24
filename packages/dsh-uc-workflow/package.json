@@ -1,0 +1,27 @@
+{
+  "name": "@coolai/dsh-uc-workflow",
+  "version": "0.1.0",
+  "description": "酷爱 bundle 第二个插件：确定性 UC 工作流引擎（模板固定步骤+实例 I/O+function/model 两类 executor+Gate+transitions，编译期 fail-closed）",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/compile.js",
+    "lib/engine.js",
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

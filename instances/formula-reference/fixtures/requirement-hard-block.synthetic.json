@@ -1,0 +1,55 @@
+{
+  "requirement_spec": {
+    "requirement_version": "SYN-REQ-DEC-003-v1",
+    "source_record_ref": "SYN-DEMAND-FORM-DEC-003-v1",
+    "product_form": "低因意式拼配熟豆",
+    "use_scenario": "低因咖啡产品",
+    "target_sensory": {
+      "acidity": {"target": 2, "tolerance": 1},
+      "sweetness": {"target": 3, "tolerance": 1},
+      "body": {"target": 3, "tolerance": 1},
+      "flavor_notes": ["焦糖", "烤坚果"]
+    },
+    "cost_ceiling_cny_per_kg_green": 70,
+    "trial_quantity_kg": 10,
+    "trial_equipment_class": "5kg样品验证机",
+    "decision_role": "配方责任人"
+  },
+  "historical_formula_evidence": [
+    {
+      "formula_version": "SYN-FML-DEC-003-v1",
+      "applicability": {
+        "product_forms": ["低因意式拼配熟豆"],
+        "use_scenarios": ["低因咖啡产品"],
+        "equipment_classes": ["5kg样品验证机"]
+      },
+      "components": [
+        {"material_id": "SYN-DEC-COL02", "specification_version": "SYN-SPEC-DEC-COL02-v1", "ratio_percent": 70},
+        {"material_id": "SYN-BRA-BC14", "specification_version": "SYN-SPEC-BRA-BC14-v1", "ratio_percent": 30}
+      ],
+      "process_assumptions": {"roast_style": "medium", "equipment_class": "5kg样品验证机"},
+      "validation": {
+        "result_ref": "SYN-TRIAL-DEC-003-01",
+        "actual_sensory": {"acidity": 2, "sweetness": 3, "body": 3, "flavor_notes": ["焦糖", "烤坚果"]},
+        "status": "accepted_for_internal_reference",
+        "recorded_at": "2026-07-03",
+        "methods": ["多人杯测", "理化检测"]
+      },
+      "provenance": {"source_system": "SYN-配方记录软件", "record_ref": "SYN-RECIPE-RECORD-DEC-003-v1"}
+    }
+  ],
+  "approved_materials": [
+    {"material_id": "SYN-DEC-COL02", "specification_version": "SYN-SPEC-DEC-COL02-v1", "batch_id": "SYN-BATCH-DEC-01", "incoming_inspection_ref": "SYN-IQC-DEC-01", "inventory_as_of": "2026-08-24T09:00:00+08:00", "inventory_record_ref": "SYN-INV-DEC-20260824", "cost_record_ref": "SYN-COST-DEC-20260824", "cost_cny_per_kg_green": 66, "available_kg": 0, "approved": true},
+    {"material_id": "SYN-BRA-BC14", "specification_version": "SYN-SPEC-BRA-BC14-v1", "batch_id": "SYN-BATCH-BRA-01", "incoming_inspection_ref": "SYN-IQC-BRA-01", "inventory_as_of": "2026-08-24T09:00:00+08:00", "inventory_record_ref": "SYN-INV-BRA-20260824", "cost_record_ref": "SYN-COST-BRA-20260824", "cost_cny_per_kg_green": 39, "available_kg": 2200, "approved": true}
+  ],
+  "hard_constraints": [
+    {"id": "SYN-CST-RATIO-BALANCE", "rule": "ratio_balance"},
+    {"id": "SYN-CST-APPROVED-MATERIAL-ONLY", "rule": "approved_material_only"},
+    {"id": "SYN-CST-INVENTORY-FOR-TRIAL", "rule": "inventory_for_trial"},
+    {"id": "SYN-CST-TARGET-RANGE", "rule": "target_range"},
+    {"id": "SYN-CST-COST-CEILING", "rule": "cost_ceiling"},
+    {"id": "SYN-CST-EQUIPMENT", "rule": "equipment_for_trial"},
+    {"id": "SYN-CST-IQC", "rule": "incoming_inspection_present"}
+  ],
+  "evaluation_dimensions": ["target_fit", "green_cost", "inventory_risk", "evidence_strength", "trial_uncertainty"]
+}

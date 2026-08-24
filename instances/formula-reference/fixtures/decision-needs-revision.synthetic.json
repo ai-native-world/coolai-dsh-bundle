@@ -1,0 +1,6 @@
+{
+  "actor_role": "配方责任人",
+  "status": "needs_revision",
+  "selected_candidate_version": null,
+  "rationale": "没有适用于当前产品、场景、设备与物料规格的历史证据，转入专家从零设计或补充经验证的迁移规则。"
+}

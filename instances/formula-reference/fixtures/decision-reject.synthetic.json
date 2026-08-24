@@ -1,0 +1,6 @@
+{
+  "actor_role": "配方责任人",
+  "status": "rejected",
+  "selected_candidate_version": null,
+  "rationale": "唯一低因候选的关键物料库存不足，拒绝进入打样并等待物料问题解决。"
+}

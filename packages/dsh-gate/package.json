@@ -1,0 +1,25 @@
+{
+  "name": "@coolai/dsh-gate",
+  "version": "0.1.0",
+  "description": "酷爱 bundle 第一个插件：Gate 骨架（挂载验证；后续扩展前置/步骤/链路 Gate 与人工拍板）",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

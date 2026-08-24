@@ -1,0 +1,80 @@
+{
+  "requirement_spec": {
+    "requirement_version": "SYN-REQ-001-v1",
+    "source_record_ref": "SYN-DEMAND-FORM-001-v1",
+    "product_form": "意式拼配熟豆",
+    "use_scenario": "奶咖为主的连锁门店",
+    "target_sensory": {
+      "acidity": {"target": 2, "tolerance": 1},
+      "sweetness": {"target": 4, "tolerance": 1},
+      "body": {"target": 4, "tolerance": 1},
+      "flavor_notes": ["巧克力", "坚果", "焦糖"]
+    },
+    "cost_ceiling_cny_per_kg_green": 48,
+    "trial_quantity_kg": 20,
+    "trial_equipment_class": "15kg样品验证机",
+    "decision_role": "配方责任人"
+  },
+  "historical_formula_evidence": [
+    {
+      "formula_version": "SYN-FML-ESP-014-v3",
+      "applicability": {
+        "product_forms": ["意式拼配熟豆"],
+        "use_scenarios": ["奶咖为主的连锁门店"],
+        "equipment_classes": ["15kg样品验证机"]
+      },
+      "components": [
+        {"material_id": "SYN-BRA-BC14", "specification_version": "SYN-SPEC-BRA-BC14-v1", "ratio_percent": 50},
+        {"material_id": "SYN-COL-HU12", "specification_version": "SYN-SPEC-COL-HU12-v1", "ratio_percent": 30},
+        {"material_id": "SYN-ETH-74110", "specification_version": "SYN-SPEC-ETH-74110-v1", "ratio_percent": 20}
+      ],
+      "process_assumptions": {"roast_style": "medium-dark", "equipment_class": "15kg样品验证机"},
+      "validation": {
+        "result_ref": "SYN-TRIAL-014-03",
+        "actual_sensory": {"acidity": 2, "sweetness": 4, "body": 4, "flavor_notes": ["巧克力", "坚果", "焦糖"]},
+        "status": "accepted_for_internal_reference",
+        "recorded_at": "2026-07-01",
+        "methods": ["多人杯测", "理化检测"]
+      },
+      "provenance": {"source_system": "SYN-配方记录软件", "record_ref": "SYN-RECIPE-RECORD-014-v3"}
+    },
+    {
+      "formula_version": "SYN-FML-ESP-022-v2",
+      "applicability": {
+        "product_forms": ["意式拼配熟豆"],
+        "use_scenarios": ["奶咖为主的连锁门店"],
+        "equipment_classes": ["15kg样品验证机"]
+      },
+      "components": [
+        {"material_id": "SYN-BRA-BC14", "specification_version": "SYN-SPEC-BRA-BC14-v1", "ratio_percent": 40},
+        {"material_id": "SYN-COL-HU12", "specification_version": "SYN-SPEC-COL-HU12-v1", "ratio_percent": 35},
+        {"material_id": "SYN-IDN-MD05", "specification_version": "SYN-SPEC-IDN-MD05-v1", "ratio_percent": 25}
+      ],
+      "process_assumptions": {"roast_style": "medium-dark", "equipment_class": "15kg样品验证机"},
+      "validation": {
+        "result_ref": "SYN-TRIAL-022-02",
+        "actual_sensory": {"acidity": 1, "sweetness": 3, "body": 5, "flavor_notes": ["黑巧克力", "香料", "坚果"]},
+        "status": "accepted_for_internal_reference",
+        "recorded_at": "2026-07-02",
+        "methods": ["多人杯测", "理化检测"]
+      },
+      "provenance": {"source_system": "SYN-配方记录软件", "record_ref": "SYN-RECIPE-RECORD-022-v2"}
+    }
+  ],
+  "approved_materials": [
+    {"material_id": "SYN-BRA-BC14", "specification_version": "SYN-SPEC-BRA-BC14-v1", "batch_id": "SYN-BATCH-BRA-01", "incoming_inspection_ref": "SYN-IQC-BRA-01", "inventory_as_of": "2026-08-24T09:00:00+08:00", "inventory_record_ref": "SYN-INV-BRA-20260824", "cost_record_ref": "SYN-COST-BRA-20260824", "cost_cny_per_kg_green": 39, "available_kg": 2200, "approved": true},
+    {"material_id": "SYN-COL-HU12", "specification_version": "SYN-SPEC-COL-HU12-v1", "batch_id": "SYN-BATCH-COL-01", "incoming_inspection_ref": "SYN-IQC-COL-01", "inventory_as_of": "2026-08-24T09:00:00+08:00", "inventory_record_ref": "SYN-INV-COL-20260824", "cost_record_ref": "SYN-COST-COL-20260824", "cost_cny_per_kg_green": 48, "available_kg": 1400, "approved": true},
+    {"material_id": "SYN-ETH-74110", "specification_version": "SYN-SPEC-ETH-74110-v1", "batch_id": "SYN-BATCH-ETH-01", "incoming_inspection_ref": "SYN-IQC-ETH-01", "inventory_as_of": "2026-08-24T09:00:00+08:00", "inventory_record_ref": "SYN-INV-ETH-20260824", "cost_record_ref": "SYN-COST-ETH-20260824", "cost_cny_per_kg_green": 62, "available_kg": 860, "approved": true},
+    {"material_id": "SYN-IDN-MD05", "specification_version": "SYN-SPEC-IDN-MD05-v1", "batch_id": "SYN-BATCH-IDN-01", "incoming_inspection_ref": "SYN-IQC-IDN-01", "inventory_as_of": "2026-08-24T09:00:00+08:00", "inventory_record_ref": "SYN-INV-IDN-20260824", "cost_record_ref": "SYN-COST-IDN-20260824", "cost_cny_per_kg_green": 43, "available_kg": 600, "approved": true}
+  ],
+  "hard_constraints": [
+    {"id": "SYN-CST-RATIO-BALANCE", "rule": "ratio_balance"},
+    {"id": "SYN-CST-APPROVED-MATERIAL-ONLY", "rule": "approved_material_only"},
+    {"id": "SYN-CST-INVENTORY-FOR-TRIAL", "rule": "inventory_for_trial"},
+    {"id": "SYN-CST-TARGET-RANGE", "rule": "target_range"},
+    {"id": "SYN-CST-COST-CEILING", "rule": "cost_ceiling"},
+    {"id": "SYN-CST-EQUIPMENT", "rule": "equipment_for_trial"},
+    {"id": "SYN-CST-IQC", "rule": "incoming_inspection_present"}
+  ],
+  "evaluation_dimensions": ["target_fit", "green_cost", "inventory_risk", "evidence_strength", "trial_uncertainty"]
+}

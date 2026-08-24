@@ -1,0 +1,4 @@
+# 酷爱 bundle · 确定性 UC 工作流引擎补丁层。
+- insert:
+    - id: coolai-uc-workflow
+      name: '@coolai/dsh-uc-workflow'

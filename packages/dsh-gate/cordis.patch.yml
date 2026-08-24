@@ -1,0 +1,5 @@
+# 酷爱 bundle · Gate 插件骨架的 cordis 补丁层。
+# 通过 dsh plugin add 挂载时自动加入 profile 的 bundle 层栈。
+- insert:
+    - id: coolai-gate
+      name: '@coolai/dsh-gate'

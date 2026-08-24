@@ -1,0 +1,6 @@
+{
+  "actor_role": "配方责任人",
+  "status": "selected_for_trial",
+  "selected_candidate_version": "SYN-CAND-ESP-014-v3",
+  "rationale": "候选通过全部已声明硬约束且目标贴合最高，进入打样验证；历史结果不等于本实例实测。"
+}
