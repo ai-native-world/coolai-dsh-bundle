@@ -1,431 +1,189 @@
 {
-  "metadata": {
-    "schema_version": "leyin.formula-rd-case.v1",
-    "case_id": "LY-SYN-MILK-BLEND-001",
-    "evaluation_as_of": "2026-08-24T09:00:00+08:00",
-    "evidence_mode": "leyin_process_grounded_with_synthetic_business_values",
-    "external_access_allowed": false,
-    "notice": "除 source_evidence_catalog 中的流程事实外，所有客户需求数值、配方、批次、成本、库存和试验结果均为模拟数据，不是乐饮真实业务值"
+  "schema_version": "leyin.formula-case.v3",
+  "demo_notice": "本文件只模拟一张乐饮业务工作台快照。除会议中确认的流程外，客户名称、需求、物料、批次、库存、成本、历史试验和评价目标均为模拟值，不得写回真实业务。",
+  "case": {
+    "case_name": "模拟｜连锁门店热奶咖基础拼配",
+    "current_stage": "需求已由销售确认，等待形成首轮配方与小样任务",
+    "business_owner": "模拟｜乐饮配方责任人",
+    "sample_due_date": "2026-09-05"
   },
-  "project_context": {
-    "customer": "乐饮创新（魔饮咖啡）",
-    "plant": "昆山研发点",
-    "uc_id": "UC-RD-001",
-    "uc_name": "熟豆拼配研发初稿与打样设计",
-    "stage": "客户需求已确认，进入配方案头设计，尚未打样",
-    "in_scope": "熟豆拼配小样方案",
-    "out_of_scope": [
-      "咖啡液完整配方",
-      "冻干粉完整配方",
-      "RTD完整配方",
-      "正式报价",
-      "量产BOM",
-      "研转产放大",
-      "生产投料"
+  "customer_request_form": {
+    "request_source": "模拟客户需求单 LY-DEMO-BRIEF-001",
+    "request_confirmed_by": "模拟｜销售需求承接人",
+    "original_customer_words": "想做一款门店长期使用的热奶咖基础豆。入口要浓郁，但不要焦苦；加奶以后还能明显喝到巧克力和烤坚果，最好带一点焦糖。必须是100%阿拉比卡。",
+    "product_form": "熟豆拼配",
+    "intended_use": {
+      "beverage": "300 ml 热奶咖",
+      "espresso_recipe": "18 g 咖啡粉萃取 36 g 浓缩液",
+      "milk_recipe": "加入 240 ml 全脂牛奶",
+      "secondary_check": "在乐饮批准的标准化黑咖条件下记录描述性风味"
+    },
+    "must_have": [
+      "100%阿拉比卡",
+      "按约定奶咖配方制作后，巧克力与烤坚果均清晰可辨",
+      "入口浓郁"
+    ],
+    "prefer_to_have": [
+      "焦糖感清晰",
+      "余韵干净且不短"
+    ],
+    "must_not_have": [
+      "可识别的焦味",
+      "发酵异味",
+      "奶咖中酸感成为主导",
+      "花香压过巧克力与烤坚果主线"
+    ],
+    "selling_points": [
+      "100%阿拉比卡",
+      "巧克力、烤坚果、焦糖方向",
+      "适合作为门店稳定奶咖基础拼配"
+    ],
+    "reference_sample": null,
+    "cost_boundary": {
+      "status": "模拟｜已由配方责任人确认用于首轮筛选",
+      "scope": "加权生豆成本，不含损耗、烘焙、人工、包装、物流和毛利",
+      "maximum": 50.0,
+      "currency_and_unit": "人民币/千克生豆"
+    }
+  },
+  "agreed_acceptance_translation": {
+    "confirmed_by": "模拟｜乐饮配方责任人",
+    "confirmation_source": "模拟确认记录 LY-DEMO-TARGET-001",
+    "intensity_words": [
+      "未识别",
+      "轻微",
+      "清晰可辨",
+      "主导"
+    ],
+    "application_test_rules": [
+      {
+        "customer_requirement": "巧克力与烤坚果均清晰可辨",
+        "test_scene": "约定的300 ml热奶咖",
+        "pass_rule": "至少达到‘清晰可辨’，且评价人对是否达到没有关键分歧"
+      },
+      {
+        "customer_requirement": "入口浓郁",
+        "test_scene": "约定的300 ml热奶咖",
+        "pass_rule": "醇厚感由评价人判断为‘清晰可辨’或‘主导’，且不以焦苦换取浓郁"
+      },
+      {
+        "customer_requirement": "不要焦苦、发酵异味或主导酸感",
+        "test_scene": "标准化黑咖与约定奶咖均检查",
+        "pass_rule": "任何评价人识别到明确焦味或发酵异味即复核；确认存在则不通过；奶咖酸感不得达到‘主导’"
+      },
+      {
+        "customer_requirement": "焦糖最好清晰",
+        "test_scene": "约定的300 ml热奶咖",
+        "pass_rule": "属于希望满足项，只用于候选排序，不覆盖必须条件"
+      }
     ]
   },
-  "source_evidence_catalog": [
-    {
-      "evidence_id": "EV-KS-ABC-SOURCING",
-      "type": "客户事实",
-      "source": "project-joyins/meeting-notes/2026-07-25-昆山走访.md",
-      "locator": "00:25:48-00:28:47",
-      "supports": [
-        "研发从价格段、风味、卖点拆解到产区、等级、豆种、比例和组合",
-        "可能形成A/B/C方案",
-        "研发库无目标物料时先向原合作供应商寻源，再考虑新供应商",
-        "记录预期风味与实际风味并持续打标"
-      ]
-    },
-    {
-      "evidence_id": "EV-KS-TWO-ENTRY",
-      "type": "客户事实",
-      "source": "project-joyins/meeting-notes/2026-07-25-昆山走访.md",
-      "locator": "00:28:52-00:31:02",
-      "supports": [
-        "需求单和客户标样是两种入口",
-        "标样需要豆型、理化和感官分析后再设计比例",
-        "测试时会比较不同方案和不同烘焙度"
-      ]
-    },
-    {
-      "evidence_id": "EV-KS-CONTROLLED-COMPARE",
-      "type": "客户事实",
-      "source": "project-joyins/meeting-notes/2026-07-25-昆山走访.md",
-      "locator": "00:35:31-00:40:04",
-      "supports": [
-        "小样机和大机参数不能直接等同",
-        "比较样品时应保持研磨、水温、过滤等条件一致",
-        "由多名有辨识能力的人评价，差异可反向修正工艺"
-      ]
-    },
-    {
-      "evidence_id": "EV-THREE-STEP-MATERIAL",
-      "type": "客户事实",
-      "source": "project-joyins/meeting-notes/2026-07-04-会议文字记录.md",
-      "locator": "03:15:47-03:19:17",
-      "supports": [
-        "原料选择依次考虑价值或卖点、价格、用途",
-        "相似历史试验应复用",
-        "风味或功能组分可能互相干扰",
-        "工艺稳定性是研发风险"
-      ]
-    },
-    {
-      "evidence_id": "EV-80-POINT-DRAFT",
-      "type": "客户事实",
-      "source": "project-joyins/meeting-notes/2026-08-05-AI智能体业务落地应用研讨会.md",
-      "locator": "03:56:42-03:58:31",
-      "supports": [
-        "第一阶段帮助配方人员更快获得约80分初稿",
-        "需要读取历史配方、理化、口感、风味评测和当前生豆库存"
-      ]
-    },
-    {
-      "evidence_id": "EV-SCA-CVA",
-      "type": "行业知识",
-      "source": "https://sca.coffee/value-assessment/",
-      "locator": "CVA Framework",
-      "supports": [
-        "物理、描述性、偏好或情感、外在信息应分层记录",
-        "描述性评价不等于市场偏好判断"
-      ]
-    },
-    {
-      "evidence_id": "EV-WCR-LEXICON",
-      "type": "行业知识",
-      "source": "https://worldcoffeeresearch.org/read-more/news/174-world-coffee-research-sensory-lexicon",
-      "locator": "Sensory Lexicon",
-      "supports": [
-        "感官词应有统一定义和强度参照",
-        "词典用于描述风味、香气和质地，不直接判断好坏"
-      ]
-    }
-  ],
-  "request": {
-    "entry_mode": "requirement_driven",
-    "request_version": "LY-SYN-REQ-MILK-001-v1",
-    "confirmation_status": "confirmed_for_formula_draft",
-    "source_record_ref": "LY-SYN-BRIEF-001",
-    "product_form": "熟豆拼配",
-    "use_context": {
-      "channel": "连锁门店",
-      "primary_beverage": "300 ml热奶咖",
-      "espresso_reference": "18 g粉量，36 g浓缩液",
-      "milk_reference": "240 ml全脂牛奶",
-      "secondary_evaluation": "标准黑咖条件下做描述性评价",
-      "consumer_intent": "入口浓郁但不焦苦，奶后仍能辨认巧克力、烤坚果和焦糖"
-    },
-    "business_value": {
-      "selling_points": [
-        "100%阿拉比卡",
-        "巧克力、烤坚果、焦糖方向",
-        "适合作为门店稳定的奶咖基础拼配"
+  "system_supplied_context": {
+    "data_as_of": "2026-08-24T18:00:00+08:00",
+    "leyin_internal_constraints": [
+      "只有当前已准入批次可以进入小样任务",
+      "小样参数不能直接作为大机量产参数",
+      "配方责任人签字前不能送客户确认"
+    ],
+    "current_green_coffee_lots": [
+      {
+        "material_name": "模拟｜巴西日晒阿拉比卡",
+        "lot": "LOT-BRA-DEMO-26A",
+        "approval_status": "已准入",
+        "available_quantity": "18.000 kg",
+        "green_bean_cost": "42.60 人民币/千克",
+        "current_lot_physical_check": "模拟｜水分与缺陷检查在乐饮内部准入范围",
+        "current_lot_cup_description": "模拟｜可可、烤坚果、低酸、醇厚",
+        "evidence_record": "模拟批次检验 BRA-26A"
+      },
+      {
+        "material_name": "模拟｜哥伦比亚水洗阿拉比卡",
+        "lot": "LOT-COL-DEMO-26B",
+        "approval_status": "已准入",
+        "available_quantity": "12.000 kg",
+        "green_bean_cost": "53.80 人民币/千克",
+        "current_lot_physical_check": "模拟｜水分与缺陷检查在乐饮内部准入范围",
+        "current_lot_cup_description": "模拟｜焦糖、可可、轻微果酸、中等醇厚",
+        "evidence_record": "模拟批次检验 COL-26B"
+      },
+      {
+        "material_name": "模拟｜危地马拉水洗阿拉比卡",
+        "lot": "LOT-GUA-DEMO-26C",
+        "approval_status": "已准入但库存不足",
+        "available_quantity": "0.200 kg",
+        "green_bean_cost": "61.50 人民币/千克",
+        "current_lot_physical_check": "模拟｜已完成准入检查",
+        "current_lot_cup_description": "模拟｜焦糖、坚果、结构感",
+        "evidence_record": "模拟批次检验 GUA-26C"
+      },
+      {
+        "material_name": "模拟｜埃塞俄比亚水洗阿拉比卡",
+        "lot": "LOT-ETH-DEMO-26D",
+        "approval_status": "已准入",
+        "available_quantity": "8.000 kg",
+        "green_bean_cost": "68.00 人民币/千克",
+        "current_lot_physical_check": "模拟｜水分与缺陷检查在乐饮内部准入范围",
+        "current_lot_cup_description": "模拟｜花香、柑橘、明亮酸质、较轻醇厚",
+        "evidence_record": "模拟批次检验 ETH-26D"
+      }
+    ],
+    "historical_formula_trials": [
+      {
+        "record": "模拟历史试验 HIST-018",
+        "use_scene": "18 g粉、36 g浓缩液、240 ml全脂牛奶",
+        "formula": "巴西日晒55% + 哥伦比亚水洗30% + 危地马拉水洗15%",
+        "roast_direction": "中深烘焙",
+        "expected": "巧克力、烤坚果、焦糖、低酸和较高醇厚",
+        "actual": "奶咖中巧克力与烤坚果清晰，焦糖可辨，酸感不突出；黑咖余韵中长",
+        "decision": "当时作为内部参考保留",
+        "reuse_boundary": "历史物料不是当前批次；危地马拉当前库存不足；只能作为首轮方向，不能直接宣布复现"
+      },
+      {
+        "record": "模拟历史试验 HIST-024",
+        "use_scene": "奶咖",
+        "formula": "巴西日晒60% + 哥伦比亚水洗40%",
+        "roast_direction": "中深烘焙",
+        "expected": "减少物料数并保留巧克力、坚果、焦糖",
+        "actual": "巧克力与坚果可用，但焦糖不足，尾段略干",
+        "decision": "需要针对焦糖和余韵调整",
+        "reuse_boundary": "用途相近，但仍需使用当前批次重做对照"
+      },
+      {
+        "record": "模拟历史试验 HIST-031",
+        "use_scene": "奶咖",
+        "formula": "巴西日晒45% + 哥伦比亚水洗35% + 埃塞俄比亚水洗20%",
+        "roast_direction": "中度烘焙",
+        "expected": "增加香气层次并保留奶咖厚度",
+        "actual": "花香与酸感过强，巧克力、坚果和醇厚主线被削弱",
+        "decision": "不适合该类奶咖目标",
+        "reuse_boundary": "本轮应把它作为失败知识，不得只因香气丰富而优先推荐"
+      }
+    ],
+    "trial_capability": {
+      "sample_roaster": "模拟｜SAMPLE-ROASTER-A",
+      "available_roast_directions": [
+        "中度烘焙",
+        "中深烘焙"
       ],
-      "priority_order": [
-        "奶咖中目标风味清晰且酸不过界",
-        "100%阿拉比卡",
-        "批次与供应可执行",
-        "加权生豆成本不超过边界"
-      ]
-    },
-    "sensory_target": {
-      "scale": "0-5 descriptive intensity",
-      "numeric_ranges_in_milk_context": {
-        "chocolate": {"min": 4.0, "max": 5.0},
-        "roasted_nut": {"min": 3.5, "max": 4.5},
-        "caramel": {"min": 3.0, "max": 4.5},
-        "acidity": {"min": 1.0, "max": 2.5},
-        "sweetness": {"min": 3.0, "max": 4.5},
-        "body": {"min": 3.5, "max": 5.0}
-      },
-      "supporting_descriptors": {
-        "aroma": ["可可", "烤坚果"],
-        "aftertaste": ["干净", "中长"],
-        "bitterness_range": {"min": 2.0, "max": 3.5}
-      },
-      "forbidden_or_failure": [
-        {"attribute": "fermented", "condition": "intensity >= 2.0"},
-        {"attribute": "floral_dominant", "condition": "intensity >= 2.5"},
-        {"attribute": "burnt", "condition": "any clearly identifiable occurrence"}
-      ]
-    },
-    "cost_boundary": {
-      "max": 50.0,
-      "currency": "CNY",
-      "unit": "kg_green",
-      "scope": "weighted_green_bean_cost_only",
-      "excluded": ["烘焙损耗", "人工", "能耗", "包装", "物流", "毛利"]
-    },
-    "trial_quantity_per_sample": {"value": 2.0, "unit": "kg_green"},
-    "max_first_round_samples": 6,
-    "sample_count_unit": "一个独立的配方版本与烘焙方向组合形成的物理熟豆样；同一样品的黑咖和奶咖评价不重复计数；本轮新做基线或对照计入上限",
-    "due_date": "2026-09-05",
-    "final_human_role": "乐饮配方责任人"
-  },
-  "benchmark_analysis": null,
-  "historical_trials": [
-    {
-      "trial_id": "HIST-018",
-      "data_origin": "模拟数据",
-      "purpose": "连锁门店奶咖基础拼配，目标为巧克力、坚果、低酸和较高醇厚度",
-      "product_and_use": "熟豆拼配；18 g/36 g浓缩液加入240 ml全脂牛奶",
-      "formula": [
-        {"material_family_id": "MAT-BRA-NAT", "ratio_percent": 55},
-        {"material_family_id": "MAT-COL-WASH", "ratio_percent": 30},
-        {"material_family_id": "MAT-GUA-WASH", "ratio_percent": 15}
+      "maximum_physical_samples_this_round": 4,
+      "planned_green_weight_per_sample": "2.000 kg",
+      "roast_recording": "设备曲线与操作记录保存到对应样品二维码",
+      "resting_rules": [
+        {
+          "scope": "模拟｜本文件中的当前豆批，中度烘焙",
+          "condition": "烘焙后72小时，在乐饮小样存放条件下评价",
+          "approved_record": "模拟｜乐饮配方责任人确认 LY-DEMO-REST-001"
+        },
+        {
+          "scope": "模拟｜本文件中的当前豆批，中深烘焙",
+          "condition": "烘焙后48小时，在乐饮小样存放条件下评价",
+          "approved_record": "模拟｜乐饮配方责任人确认 LY-DEMO-REST-002"
+        }
       ],
-      "roast_direction": "medium_dark",
-      "equipment_class": "SAMPLE-ROASTER-A",
-      "expected": {
-        "chocolate": "4.0-4.5",
-        "roasted_nut": "3.5-4.2",
-        "caramel": "3.2-4.0",
-        "risk": "深度增加可能带来焦苦"
-      },
-      "actual_in_milk": {
-        "chocolate": 4.4,
-        "roasted_nut": 4.0,
-        "caramel": 3.6,
-        "acidity": 1.8,
-        "sweetness": 3.5,
-        "body": 4.3,
-        "bitterness": 2.8,
-        "risk_tags": {"fermented": 0.2, "floral_dominant": 0.4, "burnt": 0.0}
-      },
-      "actual_black_descriptors": ["可可", "烤榛果", "焦糖", "中长余韵"],
-      "panel_size": 3,
-      "decision": "accepted_as_internal_reference",
-      "evidence_refs": ["EV-KS-ABC-SOURCING", "EV-KS-CONTROLLED-COMPARE"]
-    },
-    {
-      "trial_id": "HIST-024",
-      "data_origin": "模拟数据",
-      "purpose": "减少物料数并降低供应复杂度",
-      "product_and_use": "熟豆拼配；奶咖",
-      "formula": [
-        {"material_family_id": "MAT-BRA-NAT", "ratio_percent": 60},
-        {"material_family_id": "MAT-COL-WASH", "ratio_percent": 40}
-      ],
-      "roast_direction": "medium_dark",
-      "equipment_class": "SAMPLE-ROASTER-A",
-      "expected": {
-        "chocolate": "4.0-4.5",
-        "roasted_nut": "3.5-4.2",
-        "caramel": "3.0-4.0"
-      },
-      "actual_in_milk": {
-        "chocolate": 4.1,
-        "roasted_nut": 3.8,
-        "caramel": 2.7,
-        "acidity": 1.7,
-        "sweetness": 3.2,
-        "body": 4.1,
-        "bitterness": 3.0,
-        "risk_tags": {"fermented": 0.2, "floral_dominant": 0.2, "burnt": 0.0}
-      },
-      "actual_black_descriptors": ["可可", "烤坚果", "焦糖弱", "尾段略干"],
-      "panel_size": 3,
-      "decision": "needs_revision_for_caramel_and_aftertaste",
-      "evidence_refs": ["EV-THREE-STEP-MATERIAL", "EV-KS-CONTROLLED-COMPARE"]
-    },
-    {
-      "trial_id": "HIST-031",
-      "data_origin": "模拟数据",
-      "purpose": "增强香气层次，同时保留奶咖厚度",
-      "product_and_use": "熟豆拼配；奶咖",
-      "formula": [
-        {"material_family_id": "MAT-BRA-NAT", "ratio_percent": 45},
-        {"material_family_id": "MAT-COL-WASH", "ratio_percent": 35},
-        {"material_family_id": "MAT-ETH-WASH", "ratio_percent": 20}
-      ],
-      "roast_direction": "medium",
-      "equipment_class": "SAMPLE-ROASTER-A",
-      "expected": {
-        "chocolate": "3.5-4.0",
-        "caramel": "3.0-4.0",
-        "acidity": "2.0-2.8",
-        "risk": "花香可能与奶咖主线冲突"
-      },
-      "actual_in_milk": {
-        "chocolate": 3.0,
-        "roasted_nut": 2.8,
-        "caramel": 3.1,
-        "acidity": 3.2,
-        "sweetness": 3.8,
-        "body": 3.3,
-        "bitterness": 2.2,
-        "risk_tags": {"fermented": 0.3, "floral_dominant": 3.1, "burnt": 0.0}
-      },
-      "actual_black_descriptors": ["花香", "柑橘", "焦糖", "酸质突出"],
-      "panel_size": 3,
-      "decision": "rejected_for_this_milk_context",
-      "evidence_refs": ["EV-KS-ABC-SOURCING", "EV-WCR-LEXICON"]
-    }
-  ],
-  "current_material_lots": [
-    {
-      "material_family_id": "MAT-BRA-NAT",
-      "material_name": "巴西日晒风格阿拉比卡生豆（模拟）",
-      "species": "Arabica",
-      "lot_id": "LOT-BRA-26A",
-      "origin_and_process": "Brazil-style / natural",
-      "incoming_status": "released_for_trial",
-      "inventory": {"available_kg": 25.0, "as_of": "2026-08-24T08:00:00+08:00"},
-      "cost": {"value": 37.5, "currency": "CNY", "unit": "kg_green"},
-      "physical": {"moisture_percent": 10.7, "density_g_per_l": 690},
-      "lot_cupping_descriptors": ["可可", "烤坚果", "低酸", "醇厚"],
-      "evidence_ref": "LOT-CUP-BRA-26A"
-    },
-    {
-      "material_family_id": "MAT-COL-WASH",
-      "material_name": "哥伦比亚水洗风格阿拉比卡生豆（模拟）",
-      "species": "Arabica",
-      "lot_id": "LOT-COL-26B",
-      "origin_and_process": "Colombia-style / washed",
-      "incoming_status": "released_for_trial",
-      "inventory": {"available_kg": 15.0, "as_of": "2026-08-24T08:00:00+08:00"},
-      "cost": {"value": 48.0, "currency": "CNY", "unit": "kg_green"},
-      "physical": {"moisture_percent": 10.5, "density_g_per_l": 715},
-      "lot_cupping_descriptors": ["焦糖", "甜感", "平衡", "柑橘酸"],
-      "evidence_ref": "LOT-CUP-COL-26B"
-    },
-    {
-      "material_family_id": "MAT-GUA-WASH",
-      "material_name": "危地马拉水洗风格阿拉比卡生豆（模拟）",
-      "species": "Arabica",
-      "lot_id": "LOT-GUA-26C",
-      "origin_and_process": "Guatemala-style / washed",
-      "incoming_status": "released_for_trial",
-      "inventory": {"available_kg": 0.2, "as_of": "2026-08-24T08:00:00+08:00"},
-      "cost": {"value": 58.0, "currency": "CNY", "unit": "kg_green"},
-      "physical": {"moisture_percent": 10.6, "density_g_per_l": 725},
-      "lot_cupping_descriptors": ["可可", "烘烤香", "焦糖", "圆润"],
-      "sourcing": {"existing_supplier": true, "lead_time_days": 7, "minimum_order_kg": 10},
-      "evidence_ref": "LOT-CUP-GUA-26C"
-    },
-    {
-      "material_family_id": "MAT-HND-WASH",
-      "material_name": "洪都拉斯水洗风格阿拉比卡生豆（模拟）",
-      "species": "Arabica",
-      "lot_id": "LOT-HND-26D",
-      "origin_and_process": "Honduras-style / washed",
-      "incoming_status": "released_for_trial",
-      "inventory": {"available_kg": 10.0, "as_of": "2026-08-24T08:00:00+08:00"},
-      "cost": {"value": 45.0, "currency": "CNY", "unit": "kg_green"},
-      "physical": {"moisture_percent": 10.8, "density_g_per_l": 705},
-      "lot_cupping_descriptors": ["牛奶巧克力", "坚果", "焦糖", "中等醇厚"],
-      "approved_substitution_for": ["MAT-GUA-WASH"],
-      "substitution_limit_percent": 20,
-      "evidence_ref": "LOT-CUP-HND-26D"
-    },
-    {
-      "material_family_id": "MAT-ETH-WASH",
-      "material_name": "埃塞俄比亚水洗风格阿拉比卡生豆（模拟）",
-      "species": "Arabica",
-      "lot_id": "LOT-ETH-26E",
-      "origin_and_process": "Ethiopia-style / washed",
-      "incoming_status": "released_for_trial",
-      "inventory": {"available_kg": 8.0, "as_of": "2026-08-24T08:00:00+08:00"},
-      "cost": {"value": 55.0, "currency": "CNY", "unit": "kg_green"},
-      "physical": {"moisture_percent": 10.4, "density_g_per_l": 735},
-      "lot_cupping_descriptors": ["花香", "柑橘", "茶感", "较高酸度"],
-      "evidence_ref": "LOT-CUP-ETH-26E"
-    }
-  ],
-  "decision_knowledge": [
-    {
-      "knowledge_id": "DK-LEYIN-MATERIAL-THREE-STEPS",
-      "type": "客户事实",
-      "status": "confirmed_process",
-      "rule": "选择原料时依次说明价值或卖点、价格边界、最终用途",
-      "applies_when": "所有配方候选",
-      "source_ref": "EV-THREE-STEP-MATERIAL"
-    },
-    {
-      "knowledge_id": "DK-LEYIN-ABC",
-      "type": "客户事实",
-      "status": "confirmed_process",
-      "rule": "数据足够时提出A/B/C不同方案，再通过实验比较",
-      "applies_when": "打样前方案设计",
-      "source_ref": "EV-KS-ABC-SOURCING"
-    },
-    {
-      "knowledge_id": "DK-LEYIN-MISSING-MATERIAL",
-      "type": "客户事实",
-      "status": "confirmed_process",
-      "rule": "研发库缺目标物料时先向已有合作供应商寻源，无货再进入新供应商开发",
-      "applies_when": "设计方向有价值但当前试验库存不足",
-      "source_ref": "EV-KS-ABC-SOURCING"
-    },
-    {
-      "knowledge_id": "DK-LEYIN-EXPECTED-ACTUAL",
-      "type": "客户事实",
-      "status": "confirmed_process",
-      "rule": "每次实验记录预期、实际和偏差，形成后续可检索标签",
-      "applies_when": "所有打样和复盘",
-      "source_ref": "EV-KS-ABC-SOURCING"
-    },
-    {
-      "knowledge_id": "DK-CVA-SEPARATION",
-      "type": "行业知识",
-      "status": "usable_reference_not_customer_adopted",
-      "rule": "把描述性结果与偏好或市场适配判断分开记录",
-      "applies_when": "感官试验设计和结果汇总",
-      "source_ref": "EV-SCA-CVA"
-    },
-    {
-      "knowledge_id": "DK-WCR-DESCRIPTORS",
-      "type": "行业知识",
-      "status": "usable_reference_not_customer_adopted",
-      "rule": "描述词必须有共同定义和强度标尺，不能用词汇本身替代质量判断",
-      "applies_when": "描述性评价",
-      "source_ref": "EV-WCR-LEXICON"
-    }
-  ],
-  "trial_resources": {
-    "equipment": {
-      "equipment_id": "KS-SAMPLE-ROASTER-A-SYN",
-      "equipment_class": "SAMPLE-ROASTER-A",
-      "availability": "available",
-      "calibration_ref": "SYN-CAL-20260801",
-      "allowed_roast_directions": ["medium", "medium_dark"]
-    },
-    "protocol": {
-      "protocol_id": "LY-SYN-CUP-MILK-v1",
-      "panelists": 3,
-      "panelist_requirement": "经内部授权且能稳定辨识目标属性",
-      "blind_code": "三位随机码",
-      "order": "每位评价人的样品顺序独立随机",
-      "black_context": {
-        "purpose": "描述性评价",
-        "grind_setting_ref": "GRIND-SYN-01",
-        "water_ref": "WATER-SYN-01",
-        "water_temperature_c": 93,
-        "brew_ratio": "1:16.67"
-      },
-      "milk_context": {
-        "purpose": "客户使用场景适配与偏好判断",
-        "dose_g": 18,
-        "espresso_yield_g": 36,
-        "milk_ml": 240,
-        "milk_type": "全脂牛奶",
-        "beverage_size_ml": 300
-      },
-      "fixed_records": [
-        "formula_and_lot",
-        "green_input_weight",
-        "equipment_id",
-        "roast_curve_or_key_parameters",
-        "environment",
-        "rest_time",
-        "grind_water_temperature_and_brew",
-        "panelist_raw_scores",
-        "descriptive_summary",
-        "milk_preference",
-        "expected_actual_delta",
-        "human_decision"
-      ]
+      "black_coffee_method": "乐饮批准的标准化黑咖描述性评价 SOP；记录研磨、水、水温、比例、时间和器具",
+      "application_method": "18 g粉萃取36 g浓缩液，加入240 ml全脂牛奶，成品约300 ml",
+      "panel_rule": "至少3名符合乐饮内部资格要求的评价人先独立记录，再讨论",
+      "raw_record_rule": "保留每位评价人的原始描述和适配判断，不只保存平均值"
     }
   }
 }
