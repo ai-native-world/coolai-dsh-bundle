@@ -20,7 +20,7 @@ DSH 底座 POC 产物（2026-08-24）：把“确定性 UC 工作流合同”做
 | `instances/leyin-quote` | 乐饮报价五步（需求解析→成本归集→产能推演→报价决策→产出报价单） | 15 项测试全绿 |
 | `instances/formula-reference` | 配方方案确定七步（UC-RD-001，曹天航 v0.2 样本移植） | 9/9 用例通过 |
 | `instances/formula-validation-sop` | 配方开发与小样验证：候选→试验计划→真实结果→逐项验收→责任人签署 | E2E + 对抗性反例通过 |
-| `instances/leyin-formula-agent` | 乐饮业务版配方 UC：客户需求→首轮方案→小样任务→真实评价→配方复盘 | 客户语义 v3，待真实乐饮试运行 |
+| `instances/leyin-formula-agent/UC.md` | 乐饮熟豆拼配研发：客户需求→候选与小样→真实评价→校正复盘 | 单文档可执行 UC v4；Mock 仅作测试输入 |
 
 ## 测试
 
