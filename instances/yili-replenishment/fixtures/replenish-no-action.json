@@ -1,0 +1,11 @@
+{
+  "sku": "SKU-002",
+  "channel": "华南渠道",
+  "stock_on_hand": 500,
+  "safety_stock": 200,
+  "daily_demand": 30,
+  "replenish_cycle_days": 7,
+  "lead_time_days": 3,
+  "due_date": "2026-09-18",
+  "data_ref": "ERP库存快照/2026-09-11T08:00:00Z"
+}
