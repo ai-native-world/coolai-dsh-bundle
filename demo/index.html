@@ -126,6 +126,11 @@
         </div>
       </div>
       <div class="box" style="margin-top:12px;">
+        <h3>模型测算建议（DeepSeek）</h3>
+        <div id="analysis"></div>
+        <ul class="reasons" id="measures"></ul>
+      </div>
+      <div class="box" style="margin-top:12px;">
         <h3>人工决策</h3>
         <div id="decision"></div>
       </div>
@@ -208,6 +213,8 @@ function renderResult(data) {
     $('k-gap').textContent = '-';
     $('k-kpi').textContent = '-';
     $('k-impact').textContent = '-';
+    $('analysis').textContent = '—';
+    $('measures').innerHTML = '';
     $('decision').innerHTML = '—';
     $('audit').textContent = JSON.stringify({ status: data.status, code: data.code, errors: data.errors, missing: data.missing, parsed: data.parsed, events: data.events }, null, 2);
     return;
@@ -220,6 +227,8 @@ function renderResult(data) {
   $('k-gap').textContent = w.supply_gap ?? '-';
   $('k-kpi').textContent = (w.supply_kpi ?? '-') + '%';
   $('k-impact').textContent = (w.financial_impact ?? '-');
+  $('analysis').textContent = w.analysis || '模型未返回测算';
+  $('measures').innerHTML = (w.measures || []).map(m => `<li>${m}</li>`).join('');
   const d = o.decision || {};
   $('decision').innerHTML = d.status
     ? `${badge(d.status)} &nbsp; <b>${d.actor_role || ''}</b>：${d.rationale || ''}（版本 ${d.forecast_version || '-'}）`

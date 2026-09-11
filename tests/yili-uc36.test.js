@@ -24,8 +24,9 @@ const FUNCS = new Map([
   ['uc36:learn', learn],
 ])
 
-// 单测不联网：模型执行器用确定性 perceive 代替，仍走同一套字段校验与 Gate。
-const makeEngine = () => new UcWorkflowEngine({ functions: FUNCS, gates: { run: () => true, defs: gateDefs }, modelFn: ({ input }) => perceive(input) })
+// 单测不联网：感知/决策模型执行器分别用确定性 perceive/decide 代替，仍走同一套字段校验与 Gate。
+const dispatchModel = ({ step, input }) => step.executor?.ref === 'uc36:decide-llm' ? decide(input) : perceive(input)
+const makeEngine = () => new UcWorkflowEngine({ functions: FUNCS, gates: { run: () => true, defs: gateDefs }, modelFn: dispatchModel })
 const PKG = compile(contract, new Set(FUNCS.keys()))
 
 async function run(fixture, humanInput = null, { mutation } = {}) {

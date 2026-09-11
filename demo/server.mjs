@@ -15,7 +15,7 @@ import { gateDefs } from '../instances/yili-uc36-supply-visibility/gates.js'
 import { goal, decide, accept, learn } from '../instances/yili-uc36-supply-visibility/functions.js'
 import { createSqliteRunStore } from './store.js'
 import { notifyRun } from './connectors.js'
-import { modelFn } from './llm.js'
+import { perceiveModelFn, decideModelFn } from './llm.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const DB_PATH = process.env.COOLAI_DB || join(HERE, 'data', 'uc-runs.db')
@@ -26,7 +26,13 @@ const FUNCS = new Map([
   ['uc36:learn', learn],
 ])
 const store = createSqliteRunStore(DB_PATH)
-const engine = new UcWorkflowEngine({ functions: FUNCS, gates: { run: () => true, defs: gateDefs }, store, modelFn })
+const dispatchModel = ({ step, input, schema }) => {
+  const ref = step.executor?.ref
+  if (ref === 'uc36:perceive-llm') return perceiveModelFn({ input, schema })
+  if (ref === 'uc36:decide-llm') return decideModelFn({ input, schema })
+  throw new Error(`未注册的模型执行器: ${ref}`)
+}
+const engine = new UcWorkflowEngine({ functions: FUNCS, gates: { run: () => true, defs: gateDefs }, store, modelFn: dispatchModel })
 const PKG = compile(contract, new Set(FUNCS.keys()))
 const STEP_NAMES = Object.fromEntries(contract.steps.map(s => [s.id, s.name]))
 const PORT = Number(process.env.PORT || 8787)

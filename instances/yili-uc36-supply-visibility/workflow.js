@@ -71,8 +71,8 @@ export const contract = {
     },
     {
       id: 'decide',
-      name: '决策：供应预警与影响测算',
-      executor: { kind: 'function', ref: 'uc36:decide' },
+      name: '决策：供应预警与影响测算（模型）',
+      executor: { kind: 'model', ref: 'uc36:decide-llm' },
       input: { fields: '$steps.perceive-output.result.fields' },
       outputKey: 'decide-output',
       outputSchema: STAGE_OUTPUT,

@@ -47,8 +47,8 @@ export function perceive(payload) {
   return stage(true, { fields }, [`已从信号抽取：${fields.forecast_version}`])
 }
 
-export function decide(payload) {
-  const { fields } = payload
+/** 硬规则阈值判定（fail-closed 唯一来源）：模型可以丰富测算文案，但不能改这些触发结论。 */
+export function buildWarning(fields) {
   const reasons = []
   let forecast_review_required = false
   if (fields.forecast_accuracy < 70) {
@@ -58,7 +58,7 @@ export function decide(payload) {
   if (fields.supply_gap < 0) reasons.push(`供应缺口 ${fields.supply_gap}（需求大于可用供应）`)
   if (fields.supply_kpi < 95) reasons.push(`保供KPI ${fields.supply_kpi}% 低于 95% 目标`)
   if (fields.customer_cancel) reasons.push('存在客户取消订单记录')
-  const warning = {
+  return {
     triggered: reasons.length > 0,
     reasons,
     forecast_review_required,
@@ -69,7 +69,12 @@ export function decide(payload) {
     financial_impact: fields.financial_impact,
     data_ref: fields.data_ref,
   }
-  return stage(true, { warning, recommendation: { action: warning.triggered ? '预警并测算影响' : '无需干预', escalate: forecast_review_required ? 'A2' : 'A3' } },
+}
+
+export function decide(payload) {
+  const { fields } = payload
+  const warning = buildWarning(fields)
+  return stage(true, { warning, recommendation: { action: warning.triggered ? '预警并测算影响' : '无需干预', escalate: warning.forecast_review_required ? 'A2' : 'A3' } },
     warning.triggered ? ['已生成供应预警与影响测算'] : ['无异常信号'])
 }
 
