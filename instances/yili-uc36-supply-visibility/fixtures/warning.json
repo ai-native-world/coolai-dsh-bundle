@@ -1,9 +1,0 @@
-{
-  "forecast_version": "F2026-09-W37",
-  "forecast_accuracy": 60,
-  "supply_gap": -20,
-  "supply_kpi": 92,
-  "customer_cancel": true,
-  "financial_impact": -150000,
-  "data_ref": "S&OP预测/2026-09-11"
-}

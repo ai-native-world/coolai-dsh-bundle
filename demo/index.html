@@ -85,16 +85,20 @@
     <section class="panel">
       <h2>UC 运行流程</h2>
       <div class="flow" id="flow">
-        <div class="node" id="n-parse"><div class="idx">① 感知</div><b>需求信号录入</b><div class="sub">从邮件抽取结构化信号</div></div>
+        <div class="node" id="n-goal"><div class="idx">① 目标</div><b>锁定保供目标与门槛</b><div class="sub">预测准确率 ≥70% · 保供KPI &gt;95%</div></div>
         <div class="arrow">→</div>
-        <div class="node" id="n-assess"><div class="idx">② 测算</div><b>供应预警与影响测算</b><div class="sub">70% 准确率门槛 · 95% KPI</div></div>
+        <div class="node" id="n-perceive"><div class="idx">② 感知</div><b>需求信号结构化抽取</b><div class="sub">一张信号解析表，确定性抽字段</div></div>
         <div class="arrow">→</div>
-        <div class="node" id="n-decide"><div class="idx">③ 人审</div><b>分配与承诺确认</b><div class="sub">A2 人审，不自动完成</div></div>
+        <div class="node" id="n-decide"><div class="idx">③ 决策</div><b>供应预警与影响测算</b><div class="sub">确定性函数，比较门槛与阈值</div></div>
         <div class="arrow">→</div>
-        <div class="node gate" id="n-finalize"><div class="idx">✓ 验收</div><b>Gate 最终校验</b><div class="sub">通过才出结果</div></div>
+        <div class="node" id="n-execute"><div class="idx">④ 执行</div><b>供应链/商务人审拍板</b><div class="sub">A2 人审，不自动完成</div></div>
+        <div class="arrow">→</div>
+        <div class="node gate" id="n-accept"><div class="idx">⑤ 验收</div><b>Gate 校验目标与门槛</b><div class="sub">通过才进入学习闭环</div></div>
+        <div class="arrow">→</div>
+        <div class="node" id="n-learn"><div class="idx">⑥ 学习</div><b>复盘与规则沉淀</b><div class="sub">记录 R47 等规则引用</div></div>
       </div>
       <div id="human" class="human" style="display:none;">
-        <h3>第 ③ 步 · 等待人工确认</h3>
+        <h3>第 ④ 步 · 等待人工确认</h3>
         <label>审批人</label><input id="actor" value="供应链负责人"/>
         <label>决策</label>
         <select id="status"><option value="approved">approved 批准</option><option value="deferred">deferred 暂缓</option><option value="rejected">rejected 驳回</option></select>
@@ -162,19 +166,30 @@ $('signal').value = SAMPLE;
 $('reset').onclick = () => { $('signal').value = SAMPLE; };
 
 function resetFlow() {
-  ['n-parse','n-assess','n-decide','n-finalize'].forEach(id => { const el=$(id); el.className = el.id==='n-finalize' ? 'node gate' : 'node'; });
+  ['n-goal','n-perceive','n-decide','n-execute','n-accept','n-learn'].forEach(id => { const el=$(id); el.className = el.id==='n-accept' ? 'node gate' : 'node'; });
 }
-function setNode(id, cls) { const el=$(id); el.className = 'node ' + (id==='n-finalize' ? 'gate ' : '') + cls; }
+function setNode(id, cls) { const el=$(id); el.className = 'node ' + (id==='n-accept' ? 'gate ' : '') + cls; }
 function renderFlow(data) {
   resetFlow();
   const ev = data.events || [];
+  const started = new Set(ev.filter(e => e.type==='step_start' || e.type==='step_resume').map(e => e.step));
   const done = new Set(ev.filter(e => e.type==='step_end').map(e => e.step));
   const pending = ev.find(e => e.type==='run_pending');
-  if (done.has('parse')) setNode('n-parse','done'); else if (ev.some(e=>e.type==='step_start'&&e.step==='parse')) setNode('n-parse','running');
-  if (done.has('assess')) setNode('n-assess','done'); else if (done.has('parse')) setNode('n-assess','running');
-  if (done.has('decide')) setNode('n-decide','done'); else if (pending?.step==='decide') setNode('n-decide','wait');
-  if (done.has('finalize') && data.status==='done') setNode('n-finalize','done');
-  else if (data.status==='failed') setNode('n-finalize','wait');
+  const ORDER = ['goal','perceive','decide','execute','accept','learn'];
+  if (data.status === 'failed') {
+    const failEv = [...ev].reverse().find(e => e.type==='run_failed' || (e.type==='step_end' && ['FAIL','FAIL_GATE'].includes(e.signal)));
+    const failStep = failEv?.step;
+    ORDER.forEach(id => {
+      if (done.has(id)) setNode('n-'+id, 'done');
+      else if (id === failStep) setNode('n-'+id, 'wait');
+    });
+    return;
+  }
+  ORDER.forEach(id => {
+    if (done.has(id)) setNode('n-'+id, 'done');
+    else if (id === pending?.step) setNode('n-'+id, 'wait');
+    else if (started.has(id)) setNode('n-'+id, 'running');
+  });
 }
 
 function badge(status) {
@@ -186,6 +201,17 @@ function renderResult(data) {
   $('resultPanel').style.display = 'block';
   const o = data.output || {};
   const w = o.warning || {};
+  if (data.status === 'failed') {
+    $('warnHead').innerHTML = `<span class="badge rejected" style="background:#fee2e2;color:#dc2626;">${data.code || 'FAILED'} · fail-closed</span>`;
+    $('reasons').innerHTML = (data.errors || data.missing || []).map(r => `<li>${r}</li>`).join('');
+    $('k-acc').textContent = '-';
+    $('k-gap').textContent = '-';
+    $('k-kpi').textContent = '-';
+    $('k-impact').textContent = '-';
+    $('decision').innerHTML = '—';
+    $('audit').textContent = JSON.stringify({ status: data.status, code: data.code, errors: data.errors, missing: data.missing, parsed: data.parsed, events: data.events }, null, 2);
+    return;
+  }
   $('warnHead').innerHTML = w.triggered
     ? `<span class="badge rejected" style="background:#fee2e2;color:#dc2626;">触发预警</span>`
     : `<span class="badge approved">无异常信号</span>`;
@@ -198,7 +224,8 @@ function renderResult(data) {
   $('decision').innerHTML = d.status
     ? `${badge(d.status)} &nbsp; <b>${d.actor_role || ''}</b>：${d.rationale || ''}（版本 ${d.forecast_version || '-'}）`
     : '等待人工确认';
-  $('audit').textContent = JSON.stringify({ status: data.status, parsed: data.parsed, events: data.events }, null, 2);
+  const l = o.learning || {};
+  $('audit').textContent = JSON.stringify({ status: data.status, code: data.code, parsed: data.parsed, learning: l, events: data.events }, null, 2);
 }
 
 async function run() {

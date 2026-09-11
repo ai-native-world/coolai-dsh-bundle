@@ -1,36 +1,45 @@
 /**
- * 伊利 UC36 · 声明式 Gate（v0.1）。
- * 只声明“过没过/过不了去哪”，业务阈值（70%/95%）在 functions.js，不写进引擎。
+ * 伊利 UC36 · 声明式 Gate（v0.2，六步环）。
  * @module instances/yili-uc36-supply-visibility/gates
  */
 
 export const gateDefs = new Map()
 
-gateDefs.set('gate-parse', {
+gateDefs.set('gate-goal', {
   on_fail: 'FAIL',
-  checks: [{ path: '$steps.parse-output.passed', operator: 'truthy' }],
+  checks: [{ path: '$steps.goal-output.passed', operator: 'truthy' }],
 })
 
-gateDefs.set('gate-assess', {
+gateDefs.set('gate-perceive', {
   on_fail: 'FAIL',
-  checks: [
-    { path: '$steps.assess-output.passed', operator: 'truthy' },
-    { path: '$steps.assess-output.evidence', operator: 'non_empty' },
-  ],
+  checks: [{ path: '$steps.perceive-output.passed', operator: 'truthy' }],
 })
 
 gateDefs.set('gate-decide', {
   on_fail: 'FAIL',
   checks: [
-    { path: '$steps.decide-output.actor_role', operator: 'non_empty' },
-    { path: '$steps.decide-output.status', operator: 'in', value: ['approved', 'deferred', 'rejected'] },
-    { path: '$steps.decide-output.rationale', operator: 'non_empty' },
+    { path: '$steps.decide-output.passed', operator: 'truthy' },
+    { path: '$steps.decide-output.evidence', operator: 'non_empty' },
   ],
 })
 
-gateDefs.set('gate-finalize', {
+gateDefs.set('gate-execute', {
   on_fail: 'FAIL',
-  checks: [{ path: '$steps.finalize-output.passed', operator: 'truthy' }],
+  checks: [
+    { path: '$steps.execute-output.actor_role', operator: 'non_empty' },
+    { path: '$steps.execute-output.status', operator: 'in', value: ['approved', 'deferred', 'rejected'] },
+    { path: '$steps.execute-output.rationale', operator: 'non_empty' },
+  ],
+})
+
+gateDefs.set('gate-accept', {
+  on_fail: 'FAIL',
+  checks: [{ path: '$steps.accept-output.passed', operator: 'truthy' }],
+})
+
+gateDefs.set('gate-learn', {
+  on_fail: 'FAIL',
+  checks: [{ path: '$steps.learn-output.passed', operator: 'truthy' }],
 })
 
 gateDefs.set('gate-output', {
@@ -38,6 +47,6 @@ gateDefs.set('gate-output', {
   checks: [
     { path: '$output.decision.status', operator: 'in', value: ['approved', 'deferred', 'rejected'] },
     { path: '$output.warning.triggered', operator: 'present' },
-    { path: '$output.decision.forecast_version', operator: 'non_empty' },
+    { path: '$output.learning.rules_applied', operator: 'present' },
   ],
 })
