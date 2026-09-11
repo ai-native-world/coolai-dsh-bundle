@@ -20,6 +20,15 @@ export function goal() {
   }, ['目标与门槛已锁定：预测准确率≥70%、保供KPI>95%'])
 }
 
+/** 字段完整性/合法性校验：模型抽取结果与确定性抽取结果共用同一套 fail-closed 判据。 */
+export function validateFields(fields) {
+  const missing = []
+  if (!(fields.forecast_accuracy >= 0 && fields.forecast_accuracy <= 100)) missing.push('预测准确率缺失或非法')
+  if (!(fields.supply_kpi >= 0 && fields.supply_kpi <= 100)) missing.push('保供KPI缺失或非法')
+  if (fields.forecast_version === 'unknown') missing.push('预测版本缺失')
+  return missing
+}
+
 export function perceive(payload) {
   const s = String(payload.signal ?? '')
   const num = re => { const m = s.match(re); return m ? Number(m[1]) : undefined }
@@ -33,10 +42,7 @@ export function perceive(payload) {
     financial_impact: num(/财务影响\s*[:：]?\s*(-?\d+(?:\.\d+)?)/) ?? 0,
     data_ref: txt(/数据来源\s*[:：]?\s*([^\n,，]+)/) || 'S&OP预测/2026-09-11',
   }
-  const missing = []
-  if (!(fields.forecast_accuracy >= 0 && fields.forecast_accuracy <= 100)) missing.push('预测准确率缺失或非法')
-  if (!(fields.supply_kpi >= 0 && fields.supply_kpi <= 100)) missing.push('保供KPI缺失或非法')
-  if (fields.forecast_version === 'unknown') missing.push('预测版本缺失')
+  const missing = validateFields(fields)
   if (missing.length > 0) return stage(false, { fields, missing }, [`感知校验未通过：${missing.join('；')}`], missing)
   return stage(true, { fields }, [`已从信号抽取：${fields.forecast_version}`])
 }

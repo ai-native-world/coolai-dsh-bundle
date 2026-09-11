@@ -60,8 +60,8 @@ export const contract = {
     },
     {
       id: 'perceive',
-      name: '感知：从需求信号抽取结构化字段',
-      executor: { kind: 'function', ref: 'uc36:perceive' },
+      name: '感知：从需求信号抽取结构化字段（模型）',
+      executor: { kind: 'model', ref: 'uc36:perceive-llm' },
       input: { signal: '$input.signal' },
       outputKey: 'perceive-output',
       outputSchema: STAGE_OUTPUT,

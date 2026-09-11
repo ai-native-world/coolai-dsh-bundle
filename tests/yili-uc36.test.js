@@ -24,7 +24,8 @@ const FUNCS = new Map([
   ['uc36:learn', learn],
 ])
 
-const makeEngine = () => new UcWorkflowEngine({ functions: FUNCS, gates: { run: () => true, defs: gateDefs } })
+// 单测不联网：模型执行器用确定性 perceive 代替，仍走同一套字段校验与 Gate。
+const makeEngine = () => new UcWorkflowEngine({ functions: FUNCS, gates: { run: () => true, defs: gateDefs }, modelFn: ({ input }) => perceive(input) })
 const PKG = compile(contract, new Set(FUNCS.keys()))
 
 async function run(fixture, humanInput = null, { mutation } = {}) {

@@ -12,21 +12,21 @@ import { compile } from '../packages/dsh-uc-workflow/lib/compile.js'
 import { UcWorkflowEngine } from '../packages/dsh-uc-workflow/lib/engine.js'
 import { contract } from '../instances/yili-uc36-supply-visibility/workflow.js'
 import { gateDefs } from '../instances/yili-uc36-supply-visibility/gates.js'
-import { goal, perceive, decide, accept, learn } from '../instances/yili-uc36-supply-visibility/functions.js'
+import { goal, decide, accept, learn } from '../instances/yili-uc36-supply-visibility/functions.js'
 import { createSqliteRunStore } from './store.js'
 import { notifyRun } from './connectors.js'
+import { modelFn } from './llm.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const DB_PATH = process.env.COOLAI_DB || join(HERE, 'data', 'uc-runs.db')
 const FUNCS = new Map([
   ['uc36:goal', goal],
-  ['uc36:perceive', perceive],
   ['uc36:decide', decide],
   ['uc36:accept', accept],
   ['uc36:learn', learn],
 ])
 const store = createSqliteRunStore(DB_PATH)
-const engine = new UcWorkflowEngine({ functions: FUNCS, gates: { run: () => true, defs: gateDefs }, store })
+const engine = new UcWorkflowEngine({ functions: FUNCS, gates: { run: () => true, defs: gateDefs }, store, modelFn })
 const PKG = compile(contract, new Set(FUNCS.keys()))
 const STEP_NAMES = Object.fromEntries(contract.steps.map(s => [s.id, s.name]))
 const PORT = Number(process.env.PORT || 8787)
@@ -59,12 +59,12 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req)
       const input = toSignalInput(body)
       const r = await engine.execute(PKG, input)
-      const parsed = perceive(input)
       await notifyRun(r)
+      const perceived = r.events?.find(e => e.type === 'step_output' && e.step === 'perceive')?.output?.result
       return json(res, 200, {
         runId: r.runId, status: r.status, code: r.code, errors: r.errors,
         output: r.output, events: r.events, steps: STEP_NAMES,
-        parsed: parsed.result.fields, missing: parsed.result.missing ?? [],
+        parsed: perceived?.fields ?? {}, missing: perceived?.missing ?? [],
       })
     } catch (e) { return json(res, 400, { error: e.message }) }
   }
@@ -73,9 +73,9 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req)
       const input = toSignalInput(body)
       const r = await engine.execute(PKG, input)
-      const parsed = perceive(input)
       await notifyRun(r)
-      return json(res, 200, { runId: r.runId, status: r.status, code: r.code, steps: STEP_NAMES, missing: parsed.result.missing ?? [] })
+      const perceived = r.events?.find(e => e.type === 'step_output' && e.step === 'perceive')?.output?.result
+      return json(res, 200, { runId: r.runId, status: r.status, code: r.code, steps: STEP_NAMES, missing: perceived?.missing ?? [] })
     } catch (e) { return json(res, 400, { error: e.message }) }
   }
   if (req.method === 'POST' && url.pathname === '/api/resume') {
