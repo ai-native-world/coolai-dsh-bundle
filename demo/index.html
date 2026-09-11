@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>组织OS · UC36 保供与需求协同（临时壳）</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --line:#e5e7eb; --ink:#111827; --muted:#6b7280; --ok:#16a34a; --bad:#dc2626; --warn:#d97706; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",sans-serif; background:var(--bg); color:var(--ink); height:100vh; display:flex; }
+  aside { width:240px; background:#0f172a; color:#fff; padding:16px; display:flex; flex-direction:column; gap:8px; }
+  aside h1 { font-size:15px; margin:0 0 8px; }
+  .uc { padding:10px 12px; border-radius:8px; background:#1e293b; cursor:pointer; border:1px solid transparent; }
+  .uc.active { border-color:#38bdf8; background:#0b1220; }
+  .uc b { display:block; font-size:14px; }
+  .uc span { color:#94a3b8; font-size:12px; }
+  main { flex:1; padding:20px; overflow:auto; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .card h2 { font-size:13px; margin:0 0 10px; color:var(--muted); font-weight:600; }
+  textarea, input, select { width:100%; padding:8px; border:1px solid var(--line); border-radius:8px; font:12px/1.5 ui-monospace,Menlo,monospace; background:#fff; }
+  textarea { height:260px; }
+  button { padding:8px 14px; border:0; border-radius:8px; background:#2563eb; color:#fff; cursor:pointer; font-weight:600; }
+  button.secondary { background:#0ea5e9; }
+  button.reject { background:var(--bad); }
+  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700; }
+  .done { background:#dcfce7; color:var(--ok); }
+  .failed { background:#fee2e2; color:var(--bad); }
+  .wait { background:#fef3c7; color:var(--warn); }
+  .events { max-height:320px; overflow:auto; font:12px/1.5 ui-monospace,Menlo,monospace; white-space:pre-wrap; }
+  .human { margin-top:12px; padding:12px; border:1px dashed var(--warn); border-radius:10px; background:#fffbeb; }
+  .human .row { display:flex; gap:8px; margin-bottom:8px; }
+</style>
+</head>
+<body>
+  <aside>
+    <h1>组织OS 临时壳</h1>
+    <div class="uc active"><b>保供与需求协同</b><span>UC36 · 伊利</span></div>
+  </aside>
+  <main>
+    <div class="grid">
+      <section class="card">
+        <h2>输入（可改）</h2>
+        <textarea id="input"></textarea>
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button id="run">运行 UC36</button>
+          <button id="reset" class="secondary">恢复样例</button>
+        </div>
+      </section>
+      <section class="card">
+        <h2>结果</h2>
+        <div style="margin-bottom:8px;">状态：<span id="status" class="badge">-</span></div>
+        <h2>输出</h2>
+        <pre id="output" style="font:12px/1.5 ui-monospace,Menlo,monospace;min-height:120px;white-space:pre-wrap;">（尚未运行）</pre>
+      </section>
+    </div>
+    <section class="card" style="margin-top:16px;">
+      <h2>执行记录（每步读了什么 / Gate 判了什么）</h2>
+      <div id="events" class="events">（尚未运行）</div>
+      <div id="human" class="human" style="display:none;">
+        <div class="row"><input id="actor" placeholder="审批人角色，如：供应链负责人" value="供应链负责人"/></div>
+        <div class="row">
+          <select id="status"><option value="approved">approved 批准</option><option value="deferred">deferred 暂缓</option><option value="rejected">rejected 驳回</option></select>
+        </div>
+        <div class="row"><input id="rationale" placeholder="理由" value="已确认供应缺口，同意按预案分配并锁定承诺"/></div>
+        <button id="resume">提交人工确认</button>
+      </div>
+    </section>
+  </main>
+<script>
+const sample = {
+  forecast_version: "F2026-09-W37",
+  forecast_accuracy: 60,
+  supply_gap: -20,
+  supply_kpi: 92,
+  customer_cancel: true,
+  financial_impact: -150000,
+  data_ref: "S&OP预测/2026-09-11"
+};
+const $ = id => document.getElementById(id);
+const input = $('input');
+input.value = JSON.stringify(sample, null, 2);
+$('reset').onclick = () => { input.value = JSON.stringify(sample, null, 2); };
+
+function setStatus(s) {
+  const el = $('status');
+  el.textContent = s;
+  el.className = 'badge ' + (s === 'done' ? 'done' : s === 'failed' ? 'failed' : 'wait');
+}
+function renderEvents(events, steps) {
+  const labels = {
+    run_start: '开始运行', step_start: '开始步骤', step_output: '步骤输出',
+    gate: 'Gate 校验', step_end: '步骤结束', run_pending: '等待人工',
+    run_done: '完成', run_failed: '失败', run_error: '异常'
+  };
+  const lines = events.map(e => {
+    let extra = '';
+    if (e.type === 'step_start') extra = ` ${steps[e.step] || e.step}`;
+    if (e.type === 'gate') extra = ` ${e.gate} · ${e.scope} → ${e.pass ? '通过' : '拦截(' + e.signal + ')'}`;
+    if (e.type === 'step_end') extra = ` ${e.step} → ${e.next || e.signal}`;
+    if (e.type === 'run_pending') extra = ` ${e.kind} @ ${e.step}`;
+    if (e.type === 'step_output') extra = ` ${e.step} → ${JSON.stringify(e.output)}`;
+    if (e.type === 'run_done') extra = ` → ${JSON.stringify(e.output)}`;
+    if (e.type === 'run_failed') extra = ` ${e.step} · ${e.signal}`;
+    return `· ${labels[e.type] || e.type}${extra}`;
+  });
+  $('events').textContent = lines.join('\n');
+}
+async function run() {
+  const body = JSON.parse(input.value);
+  const res = await fetch('/api/run', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ input: body }) });
+  const data = await res.json();
+  if (data.error) { $('output').textContent = data.error; return; }
+  setStatus(data.status);
+  $('output').textContent = JSON.stringify(data.output || null, null, 2);
+  renderEvents(data.events || [], data.steps || {});
+  $('human').style.display = (data.status === 'wait_human') ? 'block' : 'none';
+  window.currentRunId = data.runId;
+}
+$('run').onclick = run;
+$('resume').onclick = async () => {
+  const response = { actor_role: $('actor').value, status: $('status').value, rationale: $('rationale').value };
+  const res = await fetch('/api/resume', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ runId: window.currentRunId, response }) });
+  const data = await res.json();
+  if (data.error) { $('output').textContent = data.error; return; }
+  setStatus(data.status);
+  $('output').textContent = JSON.stringify(data.output || null, null, 2);
+  renderEvents(data.events || [], data.steps || {});
+  $('human').style.display = 'none';
+};
+</script>
+</body>
+</html>
