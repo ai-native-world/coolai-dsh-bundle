@@ -134,6 +134,7 @@
         <h3>人工决策</h3>
         <div id="decision"></div>
       </div>
+      <div style="margin-top:10px;"><a id="receiptLink" target="_blank" style="display:none;color:var(--blue);font-size:13px;">查看审计回执（四问证据链）→</a></div>
       <details>
         <summary>执行记录（审计）</summary>
         <pre id="audit">-</pre>
@@ -216,6 +217,8 @@ function renderResult(data) {
     $('analysis').textContent = '—';
     $('measures').innerHTML = '';
     $('decision').innerHTML = '—';
+    $('receiptLink').style.display = data.runId ? 'inline' : 'none';
+    $('receiptLink').href = '/api/receipt?id=' + (data.runId || '');
     $('audit').textContent = JSON.stringify({ status: data.status, code: data.code, errors: data.errors, missing: data.missing, parsed: data.parsed, events: data.events }, null, 2);
     return;
   }
@@ -234,6 +237,8 @@ function renderResult(data) {
     ? `${badge(d.status)} &nbsp; <b>${d.actor_role || ''}</b>：${d.rationale || ''}（版本 ${d.forecast_version || '-'}）`
     : '等待人工确认';
   const l = o.learning || {};
+  $('receiptLink').style.display = data.runId ? 'inline' : 'none';
+  $('receiptLink').href = '/api/receipt?id=' + (data.runId || '');
   $('audit').textContent = JSON.stringify({ status: data.status, code: data.code, parsed: data.parsed, learning: l, events: data.events }, null, 2);
 }
 

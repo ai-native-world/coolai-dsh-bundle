@@ -16,6 +16,7 @@ import { goal, decide, accept, learn } from '../instances/yili-uc36-supply-visib
 import { createSqliteRunStore } from './store.js'
 import { notifyRun } from './connectors.js'
 import { perceiveModelFn, decideModelFn } from './llm.js'
+import { buildReceipt } from './audit.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const DB_PATH = process.env.COOLAI_DB || join(HERE, 'data', 'uc-runs.db')
@@ -65,12 +66,14 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req)
       const input = toSignalInput(body)
       const r = await engine.execute(PKG, input)
+      await store.setMeta(r.runId, { channel: body.channel, actor: body.actor })
       await notifyRun(r)
       const perceived = r.events?.find(e => e.type === 'step_output' && e.step === 'perceive')?.output?.result
       return json(res, 200, {
         runId: r.runId, status: r.status, code: r.code, errors: r.errors,
         output: r.output, events: r.events, steps: STEP_NAMES,
         parsed: perceived?.fields ?? {}, missing: perceived?.missing ?? [],
+        receipt: await buildReceipt(r, await store.getMeta(r.runId)),
       })
     } catch (e) { return json(res, 400, { error: e.message }) }
   }
@@ -79,9 +82,10 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req)
       const input = toSignalInput(body)
       const r = await engine.execute(PKG, input)
+      await store.setMeta(r.runId, { channel: body.channel, actor: body.actor })
       await notifyRun(r)
       const perceived = r.events?.find(e => e.type === 'step_output' && e.step === 'perceive')?.output?.result
-      return json(res, 200, { runId: r.runId, status: r.status, code: r.code, steps: STEP_NAMES, missing: perceived?.missing ?? [] })
+      return json(res, 200, { runId: r.runId, status: r.status, code: r.code, steps: STEP_NAMES, missing: perceived?.missing ?? [], receipt: await buildReceipt(r, await store.getMeta(r.runId)) })
     } catch (e) { return json(res, 400, { error: e.message }) }
   }
   if (req.method === 'POST' && url.pathname === '/api/resume') {
@@ -89,8 +93,13 @@ const server = http.createServer(async (req, res) => {
       const { runId, response } = await readBody(req)
       const r = await engine.resume(runId, response)
       await notifyRun(r)
-      return json(res, 200, { runId: r.runId, status: r.status, code: r.code, errors: r.errors, output: r.output, events: r.events, steps: STEP_NAMES })
+      return json(res, 200, { runId: r.runId, status: r.status, code: r.code, errors: r.errors, output: r.output, events: r.events, steps: STEP_NAMES, receipt: await buildReceipt(r, await store.getMeta(runId)) })
     } catch (e) { return json(res, 400, { error: e.message }) }
+  }
+  if (req.method === 'GET' && url.pathname === '/api/receipt') {
+    const run = await engine.getRun(url.searchParams.get('id'))
+    if (!run) return json(res, 404, { error: 'run not found' })
+    return json(res, 200, await buildReceipt(run, await store.getMeta(run.runId)))
   }
   if (req.method === 'GET' && url.pathname === '/api/runs') {
     const runs = await engine.listRuns()

@@ -16,11 +16,18 @@ export function createSqliteRunStore(dbPath) {
       updated_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_uc_runs_updated ON uc_runs (updated_at DESC);
+    CREATE TABLE IF NOT EXISTS run_meta (
+      run_id TEXT PRIMARY KEY,
+      channel TEXT NOT NULL,
+      actor TEXT NOT NULL
+    );
   `)
   const get = db.prepare('SELECT record FROM uc_runs WHERE run_id = ?')
   const put = db.prepare(`INSERT INTO uc_runs (run_id, record, updated_at) VALUES (?, ?, ?)
     ON CONFLICT(run_id) DO UPDATE SET record = excluded.record, updated_at = excluded.updated_at`)
   const all = db.prepare('SELECT record FROM uc_runs ORDER BY updated_at DESC')
+  const metaGet = db.prepare('SELECT channel, actor FROM run_meta WHERE run_id = ?')
+  const metaPut = db.prepare('INSERT INTO run_meta (run_id, channel, actor) VALUES (?, ?, ?) ON CONFLICT(run_id) DO UPDATE SET channel = excluded.channel, actor = excluded.actor')
   return {
     async create(record) {
       if (get.get(record.runId)) throw new Error(`run ${record.runId} 已存在`)
@@ -36,6 +43,13 @@ export function createSqliteRunStore(dbPath) {
     },
     async list() {
       return all.all().map(r => JSON.parse(r.record))
+    },
+    async setMeta(runId, meta) {
+      metaPut.run(runId, meta.channel ?? 'unknown', meta.actor ?? 'unknown')
+    },
+    async getMeta(runId) {
+      const row = metaGet.get(runId)
+      return row ? { channel: row.channel, actor: row.actor } : { channel: 'unknown', actor: 'unknown' }
     },
     close() { db.close() },
   }
