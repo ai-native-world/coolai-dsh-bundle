@@ -2,12 +2,13 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<title>组织OS · 伊利 UC 运行台（临时壳）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>组织OS · 伊利 UC 运行台</title>
 <style>
-  :root { --bg:#eef1f5; --card:#fff; --line:#e5e7eb; --ink:#0f172a; --muted:#64748b; --ok:#16a34a; --bad:#dc2626; --warn:#d97706; --blue:#2563eb; }
+  :root { --bg:#f3f5f9; --card:#fff; --line:#e5e7eb; --ink:#0f172a; --muted:#64748b; --ok:#16a34a; --bad:#dc2626; --warn:#d97706; --blue:#2563eb; --indigo:#4338ca; }
   * { box-sizing:border-box; }
   body { margin:0; font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",sans-serif; background:var(--bg); color:var(--ink); height:100vh; display:flex; overflow:hidden; }
-  aside { width:264px; background:#0f172a; color:#fff; display:flex; flex-direction:column; }
+  aside { width:272px; background:#0f172a; color:#fff; display:flex; flex-direction:column; flex:none; }
   aside header { padding:16px; border-bottom:1px solid #1e293b; }
   aside header b { font-size:15px; }
   aside header span { display:block; color:#94a3b8; font-size:12px; margin-top:2px; }
@@ -17,33 +18,48 @@
   .uc.active { background:#0b1220; border-color:#38bdf8; color:#fff; }
   .uc .tag { float:right; color:#64748b; font-size:11px; }
   .uc.active .tag { color:#38bdf8; }
-  main { flex:1; overflow:auto; padding:20px; }
-  .head { display:flex; align-items:baseline; gap:10px; margin-bottom:14px; }
-  .head h1 { font-size:18px; margin:0; }
-  .head .desc { color:var(--muted); font-size:13px; }
-  .cols { display:grid; grid-template-columns:340px 1fr; gap:16px; align-items:start; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
-  .card h2 { font-size:13px; margin:0 0 12px; color:var(--muted); font-weight:600; }
+  main { flex:1; overflow:auto; padding:22px; }
+  .top { margin-bottom:16px; }
+  .top h1 { font-size:19px; margin:0; }
+  .top .desc { color:var(--muted); font-size:13px; margin-top:4px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .panel h2 { font-size:13px; color:var(--muted); font-weight:600; margin:0 0 12px; }
+  textarea { width:100%; min-height:110px; padding:12px; border:1px solid var(--line); border-radius:10px; font:13px/1.6 ui-monospace,Menlo,monospace; background:#fff; }
+  .row { display:flex; gap:10px; margin-top:12px; }
+  button { padding:10px 18px; border:0; border-radius:9px; background:var(--blue); color:#fff; cursor:pointer; font-weight:600; }
+  button.ghost { background:#eef2ff; color:var(--blue); }
+  /* workflow */
+  .flow { display:flex; align-items:stretch; gap:0; }
+  .node { flex:1; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; background:#fff; position:relative; }
+  .node .idx { font-size:11px; color:var(--muted); }
+  .node b { display:block; font-size:13px; margin:4px 0; }
+  .node .sub { font-size:11px; color:var(--muted); }
+  .node.done { border-color:#86efac; background:#f0fdf4; }
+  .node.done .idx { color:var(--ok); }
+  .node.running { border-color:#fde68a; background:#fffbeb; }
+  .node.wait { border-color:#fca5a5; background:#fef2f2; }
+  .node.gate { border-color:#c7d2fe; background:#f8faff; }
+  .arrow { display:flex; align-items:center; color:var(--muted); padding:0 4px; font-size:18px; }
+  /* report */
+  .report { display:grid; grid-template-columns:1.1fr .9fr; gap:14px; }
+  .box { border:1px solid var(--line); border-radius:12px; padding:14px; background:#fafafa; }
+  .box h3 { margin:0 0 8px; font-size:13px; }
+  .kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .kpi { background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px; }
+  .kpi b { display:block; font-size:18px; }
+  .kpi span { color:var(--muted); font-size:11px; }
+  ul.reasons { margin:6px 0 0; padding-left:18px; }
+  ul.reasons li { margin:4px 0; font-size:13px; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:999px; font-size:12px; font-weight:700; }
+  .approved { background:#dcfce7; color:var(--ok); }
+  .deferred { background:#fef3c7; color:var(--warn); }
+  .rejected { background:#fee2e2; color:var(--bad); }
+  .human { margin-top:14px; padding:14px; border:1px dashed var(--warn); border-radius:12px; background:#fffbeb; }
+  .human h3 { margin:0 0 10px; font-size:13px; color:var(--warn); }
   label { display:block; font-size:12px; color:var(--muted); margin:8px 0 3px; }
   input, select { width:100%; padding:8px; border:1px solid var(--line); border-radius:8px; font:13px/1.5 ui-monospace,Menlo,monospace; }
-  button { padding:10px 16px; border:0; border-radius:8px; background:var(--blue); color:#fff; cursor:pointer; font-weight:600; }
-  button.ghost { background:#eef2ff; color:var(--blue); }
-  .steps { display:flex; flex-direction:column; gap:10px; }
-  .step { display:flex; gap:12px; padding:12px; border:1px solid var(--line); border-radius:10px; background:#fff; }
-  .step .n { width:26px; height:26px; border-radius:50%; background:#e2e8f0; color:#475569; display:flex; align-items:center; justify-content:center; font-weight:700; flex:none; }
-  .step.done .n { background:#dcfce7; color:var(--ok); }
-  .step.running .n { background:#fef3c7; color:var(--warn); }
-  .step.wait .n { background:#fee2e2; color:var(--bad); }
-  .step.gate .n { background:#e0e7ff; color:#4338ca; }
-  .step b { display:block; }
-  .step .sub { color:var(--muted); font-size:12px; }
-  .step .note { margin-top:6px; font-size:12px; }
-  .step.gate { border-color:#c7d2fe; background:#f8faff; }
-  .human { margin-top:12px; padding:12px; border:1px dashed var(--warn); border-radius:10px; background:#fffbeb; }
-  .human h3 { margin:0 0 8px; font-size:13px; color:var(--warn); }
-  .out { margin-top:16px; }
-  .out pre { background:#0f172a; color:#d1fae5; padding:12px; border-radius:10px; overflow:auto; font:12px/1.5 ui-monospace,Menlo,monospace; min-height:90px; white-space:pre-wrap; }
-  .reasons li { margin:4px 0; }
+  details { margin-top:14px; }
+  details pre { background:#0f172a; color:#d1fae5; padding:12px; border-radius:10px; overflow:auto; font:12px/1.5 ui-monospace,Menlo,monospace; white-space:pre-wrap; }
 </style>
 </head>
 <body>
@@ -52,70 +68,85 @@
     <nav id="ucnav"></nav>
   </aside>
   <main>
-    <div class="head">
+    <div class="top">
       <h1>UC36 · 保供与需求协同/预测可见性</h1>
-      <span class="desc">Agent 预警与影响测算，供应链/商务做分配与承诺（A3 预警 · A2 承诺 · A1 重大决策）</span>
+      <div class="desc">Agent 预警与影响测算，供应链/商务做分配与承诺（A3 预警 · A2 承诺 · A1 重大决策）</div>
     </div>
-    <div class="cols">
-      <section class="card">
-        <h2>① 输入（模拟一个需求信号）</h2>
-        <label>预测版本</label><input id="forecast_version" value="F2026-09-W37"/>
-        <label>预测准确率（%，门槛 70）</label><input id="forecast_accuracy" type="number" value="60"/>
-        <label>供应缺口（负=短缺）</label><input id="supply_gap" type="number" value="-20"/>
-        <label>保供 KPI（%，目标 95）</label><input id="supply_kpi" type="number" value="92"/>
-        <label>客户取消订单</label>
-        <select id="customer_cancel"><option value="true">是</option><option value="false">否</option></select>
-        <label>财务影响（元）</label><input id="financial_impact" type="number" value="-150000"/>
-        <label>数据来源</label><input id="data_ref" value="S&OP预测/2026-09-11"/>
-        <div style="margin-top:14px;display:flex;gap:8px;">
-          <button id="run">运行</button>
-          <button id="reset" class="ghost">恢复样例</button>
+
+    <section class="panel">
+      <h2>模拟一个客户邮件 / 需求信号</h2>
+      <textarea id="signal">【S&OP预警】预测版本 F2026-09-W37，预测准确率 60%，供应缺口 -20，保供KPI 92%，客户取消订单：是，财务影响 -150000，数据来源 S&OP预测/2026-09-11。</textarea>
+      <div class="row">
+        <button id="run">运行 UC36</button>
+        <button id="reset" class="ghost">恢复样例</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>UC 运行流程</h2>
+      <div class="flow" id="flow">
+        <div class="node" id="n-parse"><div class="idx">① 感知</div><b>需求信号录入</b><div class="sub">从邮件抽取结构化信号</div></div>
+        <div class="arrow">→</div>
+        <div class="node" id="n-assess"><div class="idx">② 测算</div><b>供应预警与影响测算</b><div class="sub">70% 准确率门槛 · 95% KPI</div></div>
+        <div class="arrow">→</div>
+        <div class="node" id="n-decide"><div class="idx">③ 人审</div><b>分配与承诺确认</b><div class="sub">A2 人审，不自动完成</div></div>
+        <div class="arrow">→</div>
+        <div class="node gate" id="n-finalize"><div class="idx">✓ 验收</div><b>Gate 最终校验</b><div class="sub">通过才出结果</div></div>
+      </div>
+      <div id="human" class="human" style="display:none;">
+        <h3>第 ③ 步 · 等待人工确认</h3>
+        <label>审批人</label><input id="actor" value="供应链负责人"/>
+        <label>决策</label>
+        <select id="status"><option value="approved">approved 批准</option><option value="deferred">deferred 暂缓</option><option value="rejected">rejected 驳回</option></select>
+        <label>理由</label><input id="rationale" value="已确认供应缺口，同意按预案分配并锁定承诺"/>
+        <div class="row"><button id="resume">提交确认</button></div>
+      </div>
+    </section>
+
+    <section class="panel" id="resultPanel" style="display:none;">
+      <h2>运行结果</h2>
+      <div class="report">
+        <div class="box">
+          <h3>预警结论</h3>
+          <div id="warnHead"></div>
+          <ul class="reasons" id="reasons"></ul>
         </div>
-      </section>
-      <section class="card">
-        <h2>UC 运行流程（感知 → 测算 → 人审 → 验收 Gate）</h2>
-        <div class="steps" id="steps">
-          <div class="step" id="s-parse"><span class="n">1</span><div><b>感知：需求信号录入与完整性校验</b><div class="sub">把输入锁定为结构化需求信号</div><div class="note" id="n-parse"></div></div></div>
-          <div class="step" id="s-assess"><span class="n">2</span><div><b>测算：供应预警与影响测算</b><div class="sub">70% 预测准确率门槛 · 95% 保供 KPI · 供应缺口 · 取消记录</div><div class="note" id="n-assess"></div></div></div>
-          <div class="step" id="s-decide"><span class="n">3</span><div><b>人审：供应链/商务分配与承诺</b><div class="sub">A2 人审，不在环内不自动完成</div><div class="note" id="n-decide"></div></div></div>
-          <div class="step gate" id="s-finalize"><span class="n">✓</span><div><b>验收 Gate：保供/需求协同决策最终校验</b><div class="sub">倒第二步校验通过才出结果，不过则 loop/拦截</div><div class="note" id="n-finalize"></div></div></div>
+        <div class="box">
+          <h3>影响测算</h3>
+          <div class="kpis">
+            <div class="kpi"><b id="k-acc">-</b><span>预测准确率</span></div>
+            <div class="kpi"><b id="k-gap">-</b><span>供应缺口</span></div>
+            <div class="kpi"><b id="k-kpi">-</b><span>保供 KPI</span></div>
+            <div class="kpi"><b id="k-impact">-</b><span>财务影响</span></div>
+          </div>
         </div>
-        <div id="human" class="human" style="display:none;">
-          <h3>等待人工确认（第 3 步）</h3>
-          <label>审批人</label><input id="actor" value="供应链负责人"/>
-          <label>决策</label>
-          <select id="status"><option value="approved">approved 批准</option><option value="deferred">deferred 暂缓</option><option value="rejected">rejected 驳回</option></select>
-          <label>理由</label><input id="rationale" value="已确认供应缺口，同意按预案分配并锁定承诺"/>
-          <div style="margin-top:10px;"><button id="resume">提交确认</button></div>
-        </div>
-      </section>
-    </div>
-    <section class="card out">
-      <h2>结果</h2>
-      <div id="resultbox"><pre id="output">（点击“运行”后在这里看结果）</pre></div>
+      </div>
+      <div class="box" style="margin-top:12px;">
+        <h3>人工决策</h3>
+        <div id="decision"></div>
+      </div>
+      <details>
+        <summary>执行记录（审计）</summary>
+        <pre id="audit">-</pre>
+      </details>
     </section>
   </main>
 
 <script>
 const UCLIST = [
-  ["UC01","奶量/成分滚动预测"],["UC02","原奶定级/分罐路由"],["UC03","牧场/认证数字化"],
-  ["UC04","Milk-pool产品组合优化"],["UC05","智能排产换产"],["UC06","出品率/三类损失实时"],
-  ["UC07","质量软测量/AI视觉"],["UC08","能耗优化"],["UC09","设备预测性维护"],
-  ["UC10","乳铁/活性物工艺寻优"],["UC11","质量放行证据自动化"],["UC12","出口履约控制塔"],
-  ["UC13","单证/合规自动化"],["UC14","追溯/质量护照"],["UC15","全球市场洞察Agent"],
-  ["UC16","客户定价/折扣智能"],["UC17","多语内容/询盘"],["UC18","利润智能体"],
-  ["UC19","套保决策支持"],["UC20","财务合并/管理报告"],["UC21","研发知识/AI概念工厂"],
-  ["UC22","碳数据即服务"],["UC23","员工Copilot/知识"],["UC24","语义层/决策本体"],
-  ["UC25","需求预测×奶季产销协同"],["UC26","客户360与账户经营Copilot"],["UC27","线索到赢单Copilot"],
-  ["UC28","应收智能体"],["UC29","出口客户开发Agent"],["UC30","产品组合利润优化Agent"],
-  ["UC31","能源与碳智能"],["UC32","湿度触发工艺自适应"],["UC33","统一CMMS预测维护"],
-  ["UC34","设备数据归集/语义层"],["UC35","小批量婴配OEE优化"],["UC36","保供与需求协同/预测可见性"],
-  ["UC37","多厂产能盘活与资产去留"],["UC38","WMS/AGV仓储物流智能"],["UC39","质量数据智能"],
-  ["UC40","奶液物流网络优化"],["UC41","客户盈利性与服务成本分层"],["UC42","销售-创新一体化"],
-  ["UC43","客户准入智能自动化"],["UC44","报价到订单全链自动流转"],["UC45","ODL订单多系统一次录入"],
-  ["UC46","商机智能捕获与滚动预测"],["UC47","NPD新品阶段门管理"],["UC48","销售谈判ATP/CTP"],
-  ["UC49","客户主数据治理与客户360"],["UC50","PMR年度销售缺口量化"],["UC51","客户AI画像评分"],
-  ["UC52","临期/滞销库存动态搭售"],["UC53","营销战役与线索归因"],["UC54","交易数据账实一致"]
+  ["UC01","奶量/成分滚动预测"],["UC02","原奶定级/分罐路由"],["UC03","牧场/认证数字化"],["UC04","Milk-pool产品组合优化"],
+  ["UC05","智能排产换产"],["UC06","出品率/三类损失实时"],["UC07","质量软测量/AI视觉"],["UC08","能耗优化"],["UC09","设备预测性维护"],
+  ["UC10","乳铁/活性物工艺寻优"],["UC11","质量放行证据自动化"],["UC12","出口履约控制塔"],["UC13","单证/合规自动化"],
+  ["UC14","追溯/质量护照"],["UC15","全球市场洞察Agent"],["UC16","客户定价/折扣智能"],["UC17","多语内容/询盘"],["UC18","利润智能体"],
+  ["UC19","套保决策支持"],["UC20","财务合并/管理报告"],["UC21","研发知识/AI概念工厂"],["UC22","碳数据即服务"],
+  ["UC23","员工Copilot/知识"],["UC24","语义层/决策本体"],["UC25","需求预测×奶季产销协同"],["UC26","客户360与账户经营Copilot"],
+  ["UC27","线索到赢单Copilot"],["UC28","应收智能体"],["UC29","出口客户开发Agent"],["UC30","产品组合利润优化Agent"],
+  ["UC31","能源与碳智能"],["UC32","湿度触发工艺自适应"],["UC33","统一CMMS预测维护"],["UC34","设备数据归集/语义层"],
+  ["UC35","小批量婴配OEE优化"],["UC36","保供与需求协同/预测可见性"],["UC37","多厂产能盘活与资产去留"],["UC38","WMS/AGV仓储物流智能"],
+  ["UC39","质量数据智能"],["UC40","奶液物流网络优化"],["UC41","客户盈利性与服务成本分层"],["UC42","销售-创新一体化"],
+  ["UC43","客户准入智能自动化"],["UC44","报价到订单全链自动流转"],["UC45","ODL订单多系统一次录入"],["UC46","商机智能捕获与滚动预测"],
+  ["UC47","NPD新品阶段门管理"],["UC48","销售谈判ATP/CTP"],["UC49","客户主数据治理与客户360"],["UC50","PMR年度销售缺口量化"],
+  ["UC51","客户AI画像评分"],["UC52","临期/滞销库存动态搭售"],["UC53","营销战役与线索归因"],["UC54","交易数据账实一致"]
 ];
 const nav = document.getElementById('ucnav');
 UCLIST.forEach(([id,name]) => {
@@ -126,64 +157,56 @@ UCLIST.forEach(([id,name]) => {
 });
 
 const $ = id => document.getElementById(id);
-const vals = () => ({
-  forecast_version: $('forecast_version').value,
-  forecast_accuracy: Number($('forecast_accuracy').value),
-  supply_gap: Number($('supply_gap').value),
-  supply_kpi: Number($('supply_kpi').value),
-  customer_cancel: $('customer_cancel').value === 'true',
-  financial_impact: Number($('financial_impact').value),
-  data_ref: $('data_ref').value,
-});
-$('reset').onclick = () => {
-  $('forecast_version').value = 'F2026-09-W37';
-  $('forecast_accuracy').value = 60;
-  $('supply_gap').value = -20;
-  $('supply_kpi').value = 92;
-  $('customer_cancel').value = 'true';
-  $('financial_impact').value = -150000;
-  $('data_ref').value = 'S&OP预测/2026-09-11';
-};
+const SAMPLE = '【S&OP预警】预测版本 F2026-09-W37，预测准确率 60%，供应缺口 -20，保供KPI 92%，客户取消订单：是，财务影响 -150000，数据来源 S&OP预测/2026-09-11。';
+$('signal').value = SAMPLE;
+$('reset').onclick = () => { $('signal').value = SAMPLE; };
 
-function resetSteps() {
-  ['s-parse','s-assess','s-decide','s-finalize'].forEach(id => document.getElementById(id).className = 'step');
-  ['n-parse','n-assess','n-decide','n-finalize'].forEach(id => document.getElementById(id).textContent = '');
+function resetFlow() {
+  ['n-parse','n-assess','n-decide','n-finalize'].forEach(id => { const el=$(id); el.className = el.id==='n-finalize' ? 'node gate' : 'node'; });
 }
-function markStep(step, cls, note) {
-  const el = document.getElementById('s-' + step);
-  if (el) el.className = 'step ' + cls;
-  const n = document.getElementById('n-' + step);
-  if (n && note) n.textContent = note;
-}
-function renderSteps(data) {
-  resetSteps();
+function setNode(id, cls) { const el=$(id); el.className = 'node ' + (id==='n-finalize' ? 'gate ' : '') + cls; }
+function renderFlow(data) {
+  resetFlow();
   const ev = data.events || [];
-  const done = new Set(ev.filter(e => e.type === 'step_end').map(e => e.step));
-  const gates = ev.filter(e => e.type === 'gate');
-  const pending = ev.find(e => e.type === 'run_pending');
-
-  if (done.has('parse')) markStep('parse', 'done', '已锁定需求信号');
-  else if (ev.some(e => e.type === 'step_start' && e.step === 'parse')) markStep('parse', 'running', '校验中…');
-
-  if (done.has('assess')) {
-    const g = gates.filter(e => e.gate === 'gate-assess');
-    const out = ev.find(e => e.type === 'step_output' && e.step === 'assess');
-    const triggered = out?.output?.result?.warning?.triggered;
-    markStep('assess', 'done', triggered ? '已生成预警' : '无异常信号');
-  } else if (done.has('parse')) markStep('assess', 'running', '测算中…');
-
-  if (done.has('decide')) markStep('decide', 'done', '人审已完成');
-  else if (pending?.step === 'decide') markStep('decide', 'wait', '等待人工确认');
-
-  if (done.has('finalize') && data.status === 'done') markStep('finalize', 'gate', 'Gate 通过，决策已留痕');
-  else if (data.status === 'failed') markStep('finalize', 'wait', 'Gate 拦截/失败');
+  const done = new Set(ev.filter(e => e.type==='step_end').map(e => e.step));
+  const pending = ev.find(e => e.type==='run_pending');
+  if (done.has('parse')) setNode('n-parse','done'); else if (ev.some(e=>e.type==='step_start'&&e.step==='parse')) setNode('n-parse','running');
+  if (done.has('assess')) setNode('n-assess','done'); else if (done.has('parse')) setNode('n-assess','running');
+  if (done.has('decide')) setNode('n-decide','done'); else if (pending?.step==='decide') setNode('n-decide','wait');
+  if (done.has('finalize') && data.status==='done') setNode('n-finalize','done');
+  else if (data.status==='failed') setNode('n-finalize','wait');
 }
+
+function badge(status) {
+  const map = { approved:'approved 批准', deferred:'deferred 暂缓', rejected:'rejected 驳回' };
+  return `<span class="badge ${status}">${map[status] || status}</span>`;
+}
+
+function renderResult(data) {
+  $('resultPanel').style.display = 'block';
+  const o = data.output || {};
+  const w = o.warning || {};
+  $('warnHead').innerHTML = w.triggered
+    ? `<span class="badge rejected" style="background:#fee2e2;color:#dc2626;">触发预警</span>`
+    : `<span class="badge approved">无异常信号</span>`;
+  $('reasons').innerHTML = (w.reasons || []).map(r => `<li>${r}</li>`).join('');
+  $('k-acc').textContent = (w.forecast_accuracy ?? '-') + '%';
+  $('k-gap').textContent = w.supply_gap ?? '-';
+  $('k-kpi').textContent = (w.supply_kpi ?? '-') + '%';
+  $('k-impact').textContent = (w.financial_impact ?? '-');
+  const d = o.decision || {};
+  $('decision').innerHTML = d.status
+    ? `${badge(d.status)} &nbsp; <b>${d.actor_role || ''}</b>：${d.rationale || ''}（版本 ${d.forecast_version || '-'}）`
+    : '等待人工确认';
+  $('audit').textContent = JSON.stringify({ status: data.status, parsed: data.parsed, events: data.events }, null, 2);
+}
+
 async function run() {
-  const res = await fetch('/api/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ input: vals() }) });
+  const res = await fetch('/api/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ signal: $('signal').value }) });
   const data = await res.json();
-  if (data.error) { $('output').textContent = data.error; return; }
-  $('output').textContent = JSON.stringify(data.output || { note: '等待人工确认后产出结果' }, null, 2);
-  renderSteps(data);
+  if (data.error) { $('resultPanel').style.display='block'; $('audit').textContent = data.error; return; }
+  renderFlow(data);
+  renderResult(data);
   $('human').style.display = (data.status === 'wait_human') ? 'block' : 'none';
   window.currentRunId = data.runId;
 }
@@ -192,9 +215,9 @@ $('resume').onclick = async () => {
   const response = { actor_role: $('actor').value, status: $('status').value, rationale: $('rationale').value };
   const res = await fetch('/api/resume', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ runId: window.currentRunId, response }) });
   const data = await res.json();
-  if (data.error) { $('output').textContent = data.error; return; }
-  $('output').textContent = JSON.stringify(data.output, null, 2);
-  renderSteps(data);
+  if (data.error) { $('audit').textContent = data.error; return; }
+  renderFlow(data);
+  renderResult(data);
   $('human').style.display = 'none';
 };
 </script>
