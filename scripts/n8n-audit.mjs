@@ -60,6 +60,7 @@ async function main() {
   const wf = exec.workflowData || {}
 
   const webhookInput = nodeJson(rd.Webhook)
+  const webhookBody = webhookInput?.body ?? {}
   const learnOut = nodeJson(rd.Learn)
   const acceptOut = nodeJson(rd.AcceptGate)
 
@@ -99,13 +100,13 @@ async function main() {
       run_id: exec.id,
       workflow: `${wf.name ?? 'unknown'}@${wf.versionId ?? exec.workflowId ?? '?'}`,
       status: statusMap(exec.status),
-      channel: webhookInput?.channel ?? 'unknown',
-      actor: webhookInput?.actor ?? 'unknown',
+      channel: webhookBody?.channel ?? 'unknown',
+      actor: webhookBody?.actor ?? 'unknown',
       started_at: exec.startedAt ?? null,
       finished_at: exec.stoppedAt ?? null,
     },
     provenance: {
-      read: { signal: webhookInput?.signal ?? webhookInput ?? null },
+      read: { signal: webhookBody?.signal ?? webhookInput ?? null },
       write: { output: learnOut?.learning ?? null },
     },
     gates,
