@@ -68,10 +68,10 @@ async function main() {
   let gates = []
   const gateObj = acceptOut?.gate
   if (gateObj) {
-    gates.push({ id: 'execute', scope: 'step', step: 'execute', pass: !!gateObj.pass, signal: gateObj.signal ?? null, rule_id: gateObj.rule_id ?? '?', title: gateObj.title ?? '', constraint: gateObj.constraint ?? '' })
+    gates.push({ id: 'execute', scope: 'step', step: 'execute', pass: !!gateObj.pass, signal: gateObj.signal ?? null, fail_reason: gateObj.fail_reason ?? null, rule_id: gateObj.rule_id ?? '?', title: gateObj.title ?? '', constraint: gateObj.constraint ?? '' })
   } else {
     const err = nodeError(rd.AcceptGate)
-    if (err) gates.push({ id: 'execute', scope: 'step', step: 'execute', pass: false, signal: err, rule_id: 'T-A1', title: '人审决策合法', constraint: 'status 合法且角色与理由非空' })
+    if (err) gates.push({ id: 'execute', scope: 'step', step: 'execute', pass: false, signal: err, fail_reason: 'unknown', rule_id: 'T-A1', title: '人审决策合法', constraint: 'status 合法且角色与理由非空' })
   }
 
   const eventTrail = Object.entries(rd).map(([node, runs]) => {

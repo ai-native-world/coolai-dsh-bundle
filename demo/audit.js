@@ -21,7 +21,7 @@ export function buildReceipt(run, meta = {}, gateDefs = new Map()) {
 
   const gates = events
     .filter(e => e.type === 'gate')
-    .map(e => ({ id: e.gate, scope: e.scope ?? '-', step: e.step ?? '-', pass: !!e.pass, signal: e.signal ?? null, ...gateMeta(e.gate) }))
+    .map(e => ({ id: e.gate, scope: e.scope ?? '-', step: e.step ?? '-', pass: !!e.pass, signal: e.signal ?? null, fail_reason: e.fail_reason ?? null, ...gateMeta(e.gate) }))
 
   const perceived = stepOutputs.perceive?.result?.fields ?? stepOutputs.perceive?.result ?? {}
 

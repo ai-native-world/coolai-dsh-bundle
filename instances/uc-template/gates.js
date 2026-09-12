@@ -1,5 +1,7 @@
 /**
  * 通用 UC 模板 · 声明式 Gate（骨架版，规则元数据随实例替换）。
+ * 每个 Gate 额外声明 fail_reason：Gate 失败时给外层 Agent Loop 的结构化原因，
+ * 对应 loop.policy.json 的 reason_action_map 键（closed 集合）。
  * @module instances/uc-template/gates
  */
 
@@ -10,6 +12,7 @@ gateDefs.set('gate-goal', {
   title: '目标与约束已锁定',
   constraint: 'goal 必须产出 passed=true 且带 evidence',
   on_fail: 'FAIL',
+  fail_reason: 'constraint_conflict',
   checks: [{ path: '$steps.goal-output.passed', operator: 'truthy' }],
 })
 
@@ -18,6 +21,7 @@ gateDefs.set('gate-perceive', {
   title: '感知字段完整性',
   constraint: 'perceive 必须通过模型抽取并通过 schema',
   on_fail: 'FAIL',
+  fail_reason: 'missing_field',
   checks: [{ path: '$steps.perceive-output.passed', operator: 'truthy' }],
 })
 
@@ -26,6 +30,7 @@ gateDefs.set('gate-decide', {
   title: '决策建议非空',
   constraint: 'decide 必须给出 recommendation',
   on_fail: 'FAIL',
+  fail_reason: 'action_not_executable',
   checks: [
     { path: '$steps.decide-output.passed', operator: 'truthy' },
     { path: '$steps.decide-output.evidence', operator: 'non_empty' },
@@ -37,6 +42,7 @@ gateDefs.set('gate-execute', {
   title: '人审决策合法',
   constraint: 'status 必须在 approved/deferred/rejected 内，且角色与理由非空',
   on_fail: 'FAIL',
+  fail_reason: 'unknown',
   checks: [
     { path: '$steps.execute-output.actor_role', operator: 'non_empty' },
     { path: '$steps.execute-output.status', operator: 'in', value: ['approved', 'deferred', 'rejected'] },
@@ -49,6 +55,7 @@ gateDefs.set('gate-accept', {
   title: '验收校验',
   constraint: 'accept 必须通过',
   on_fail: 'FAIL',
+  fail_reason: 'unknown',
   checks: [{ path: '$steps.accept-output.passed', operator: 'truthy' }],
 })
 
@@ -57,6 +64,7 @@ gateDefs.set('gate-learn', {
   title: '学习沉淀',
   constraint: 'learn 必须通过',
   on_fail: 'FAIL',
+  fail_reason: 'unknown',
   checks: [{ path: '$steps.learn-output.passed', operator: 'truthy' }],
 })
 
@@ -65,6 +73,7 @@ gateDefs.set('gate-output', {
   title: '输出契约校验',
   constraint: '最终输出必须满足 outputSchema',
   on_fail: 'FAIL',
+  fail_reason: 'constraint_conflict',
   checks: [
     { path: '$output.decision.status', operator: 'in', value: ['approved', 'deferred', 'rejected'] },
     { path: '$output.learning.outcome', operator: 'present' },

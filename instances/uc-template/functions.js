@@ -17,7 +17,10 @@ export function accept(payload) {
   const { decision, recommendation } = payload
   const ok_status = ['approved', 'deferred', 'rejected'].includes(decision.status)
   const passed = ok_status && !!decision.actor_role && !!decision.rationale
-  const acceptance = { passed, decision_status_ok: ok_status }
+  // 结构化失败原因（闭环给 Agent Loop，映射 loop.policy.reason_action_map）：
+  // 人审输入不合法属于不可自动修复，一律 unknown → escalate，绝不自动 loop。
+  const fail_reason = passed ? null : 'unknown'
+  const acceptance = { passed, decision_status_ok: ok_status, fail_reason }
   return stage(passed, { decision: { ...decision, recommendation }, acceptance },
     passed ? ['验收通过：决策合法'] : ['验收未通过：决策状态非法'],
     passed ? [] : ['decision.status 非法或字段缺失'])

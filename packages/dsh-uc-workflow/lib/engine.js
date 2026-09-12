@@ -104,7 +104,11 @@ function runCheck(check, ctx) {
 }
 
 function runDeclarativeGate(gate, ctx) {
-  return { pass: (gate.checks ?? []).every(c => runCheck(c, ctx)), onFail: gate.on_fail ?? gate.onFail ?? 'FAIL' }
+  return {
+    pass: (gate.checks ?? []).every(c => runCheck(c, ctx)),
+    onFail: gate.on_fail ?? gate.onFail ?? 'FAIL',
+    failReason: gate.fail_reason ?? 'unknown',
+  }
 }
 
 function resolveStepRef(refStr, input, steps) {
@@ -164,12 +168,14 @@ export class UcWorkflowEngine {
   runGate(gid, ctx, transitions) {
     if (this.gateDefs.has(gid)) {
       const result = runDeclarativeGate(this.gateDefs.get(gid), ctx)
-      if (result.pass) return 'PASS'
-      return transitions?.[result.onFail] !== undefined ? result.onFail : 'FAIL'
+      if (result.pass) return { signal: 'PASS', failReason: null }
+      const sig = transitions?.[result.onFail] !== undefined ? result.onFail : 'FAIL'
+      return { signal: sig, failReason: result.failReason }
     }
     const pass = this.gates.run(gid, ctx)
-    if (pass) return 'PASS'
-    return transitions?.FAIL_GATE !== undefined ? 'FAIL_GATE' : 'FAIL'
+    if (pass) return { signal: 'PASS', failReason: null }
+    const sig = transitions?.FAIL_GATE !== undefined ? 'FAIL_GATE' : 'FAIL'
+    return { signal: sig, failReason: 'unknown' }
   }
 
   async getRun(runId) { return this.store.load(runId) }
@@ -222,12 +228,12 @@ export class UcWorkflowEngine {
           return { status: 'failed', code: 'INPUT_SCHEMA_INVALID', stepsStarted: 0, errors: inputErrors, events, runId }
         }
         for (const gid of pkg.inputGates ?? []) {
-          const signal = this.runGate(gid, { input, steps }, {})
-          rec('gate', { gate: gid, scope: 'input', pass: signal === 'PASS', signal })
-          if (signal !== 'PASS') {
-            rec('run_failed', { step: null, signal, gate: gid })
+          const g = this.runGate(gid, { input, steps }, {})
+          rec('gate', { gate: gid, scope: 'input', pass: g.signal === 'PASS', signal: g.signal, fail_reason: g.failReason })
+          if (g.signal !== 'PASS') {
+            rec('run_failed', { step: null, signal: g.signal, gate: gid, fail_reason: g.failReason })
             await checkpoint('failed')
-            return { status: 'failed', code: 'GATE_FAILED', stepsStarted: 0, errors: [`gate ${gid} 拦截`], events, runId }
+            return { status: 'failed', code: 'GATE_FAILED', stepsStarted: 0, failReason: g.failReason, errors: [`gate ${gid} 拦截`], events, runId }
           }
         }
       } else {
@@ -247,14 +253,15 @@ export class UcWorkflowEngine {
         for (const [k, ref] of Object.entries(step.input ?? {})) stepInput[k] = resolveStepRef(ref, input, steps)
         let signal = 'PASS'
         let gateFailed = false
+        let failReason = null
 
         if (!isResumeStep) {
           rec('step_start', { step: step.id, input: stepInput })
           stepsStarted++
           for (const gid of step.preGates ?? []) {
-            const nextSignal = this.runGate(gid, { input, stepInput, step, steps }, step.transitions)
-            rec('gate', { gate: gid, scope: 'pre', step: step.id, pass: nextSignal === 'PASS', signal: nextSignal })
-            if (nextSignal !== 'PASS') { signal = nextSignal; gateFailed = true; break }
+            const g = this.runGate(gid, { input, stepInput, step, steps }, step.transitions)
+            rec('gate', { gate: gid, scope: 'pre', step: step.id, pass: g.signal === 'PASS', signal: g.signal, fail_reason: g.failReason })
+            if (g.signal !== 'PASS') { signal = g.signal; gateFailed = true; failReason = g.failReason; break }
           }
         } else rec('step_resume', { step: step.id })
 
@@ -288,9 +295,9 @@ export class UcWorkflowEngine {
           } else {
             steps[step.outputKey] = structuredClone(output)
             for (const gid of step.postGates ?? []) {
-              const nextSignal = this.runGate(gid, { input, stepInput, step, steps, output, stepOutput: output }, step.transitions)
-              rec('gate', { gate: gid, scope: 'post', step: step.id, pass: nextSignal === 'PASS', signal: nextSignal })
-              if (nextSignal !== 'PASS') { signal = nextSignal; gateFailed = true; break }
+              const g = this.runGate(gid, { input, stepInput, step, steps, output, stepOutput: output }, step.transitions)
+              rec('gate', { gate: gid, scope: 'post', step: step.id, pass: g.signal === 'PASS', signal: g.signal, fail_reason: g.failReason })
+              if (g.signal !== 'PASS') { signal = g.signal; gateFailed = true; failReason = g.failReason; break }
             }
             if (!gateFailed && step.transitionPath) {
               const routed = resolvePath(step.transitionPath, { input, steps, output })
@@ -316,12 +323,12 @@ export class UcWorkflowEngine {
             return { status: 'failed', code: 'OUTPUT_SCHEMA_INVALID', stepsStarted, errors: outputErrors, events, runId }
           }
           for (const gid of pkg.outputGates ?? []) {
-            const nextSignal = this.runGate(gid, { input, steps, output: result }, {})
-            rec('gate', { gate: gid, scope: 'output', pass: nextSignal === 'PASS', signal: nextSignal })
-            if (nextSignal !== 'PASS') {
-              rec('run_failed', { step: step.id, signal: nextSignal, gate: gid })
+            const g = this.runGate(gid, { input, steps, output: result }, {})
+            rec('gate', { gate: gid, scope: 'output', pass: g.signal === 'PASS', signal: g.signal, fail_reason: g.failReason })
+            if (g.signal !== 'PASS') {
+              rec('run_failed', { step: step.id, signal: g.signal, gate: gid, fail_reason: g.failReason })
               await checkpoint('failed')
-              return { status: 'failed', code: 'GATE_FAILED', stepsStarted, errors: [`gate ${gid} 拦截`], events, runId }
+              return { status: 'failed', code: 'GATE_FAILED', stepsStarted, failReason: g.failReason, errors: [`gate ${gid} 拦截`], events, runId }
             }
           }
           rec('run_done', { output: result })
@@ -330,9 +337,11 @@ export class UcWorkflowEngine {
           return { status: 'done', output: result, events, runId }
         }
         if (target === '$fail' || target === undefined) {
-          rec('run_failed', { step: step.id, signal, gateFailed })
+          // 任何非 Gate 失败（schema/route/异常兜底）也必须带结构化原因，默认 unknown → 政策表只能 escalate
+          const reason = failReason ?? 'unknown'
+          rec('run_failed', { step: step.id, signal, gateFailed, fail_reason: reason })
           await checkpoint('failed')
-          return { status: 'failed', code: gateFailed ? 'GATE_FAILED' : 'FAILED', stepsStarted, errors: [`步骤 ${step.id} 以 ${signal} 结束${gateFailed ? '（Gate 拦截）' : ''}`], events, runId }
+          return { status: 'failed', code: gateFailed ? 'GATE_FAILED' : 'FAILED', stepsStarted, failReason: reason, errors: [`步骤 ${step.id} 以 ${signal} 结束${gateFailed ? '（Gate 拦截）' : ''}`], events, runId }
         }
         if (target === '$wait_input' || target === '$wait_human') {
           const kind = target === '$wait_human' ? 'human' : 'input'

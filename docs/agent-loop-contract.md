@@ -73,12 +73,16 @@ Agent 不能自由组合，只能在这个表里选。
 
 - 资产：`instances/uc-template/loop.policy.json`（政策表 + 权限 + 预算，客户可扩
   白名单，不可改动作空间/政策表）
+- Gate 原因：`instances/uc-template/gates.js` 每个 Gate 声明 `fail_reason`；引擎
+  在 Gate 失败 / schema 失败时把 `fail_reason` 写进 run 与回执
 - 机制：`packages/dsh-uc-workflow/lib/loop-policy.js`（把资产变成可执行判定）
-- 测试：`tests/loop-policy.test.js`（13 条，覆盖越权/非法/超轮/白名单，全 fail-closed）
+- 测试：`tests/loop-policy.test.js`（13 条，越权/非法/超轮/白名单）+
+  `tests/gate-fail-reason.test.js`（4 条，Gate 失败→结构化 reason→政策授权闭环）
 
-## 尚未接通的（下一步）
+## 已接通 / 尚未接通
 
-- 把 Gate 的失败输出改造成「结构化 reason」，而不是只抛 error（当前 n8n 模板的
-  AcceptGate 只抛 `GATE_FAIL`，还没有 reason 字段）。
-- 把 `enforceAction` 接到「Agent 读回执 → 触发下一轮 run」的真实编排里（现在机制
-  已就位，编排层是下一步）。
+已接通：Gate 失败会带结构化 `fail_reason`（TS 引擎 + n8n 模板都已改），从回执能
+读到「为什么没过」，Agent 才能按政策表选动作。
+
+尚未接通：把 `enforceAction` 接到「Agent 读回执 → 触发下一轮 run」的真实编排里
+（笼子已就位，编排层是下一步）。

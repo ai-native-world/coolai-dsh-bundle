@@ -195,7 +195,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// 验收 Gate（fail-closed）：人审决策必须合法，否则抛错让执行失败\nconst d = $json?.body || $json || {};\nconst okStatus = ['approved', 'deferred', 'rejected'].includes(d.status);\nconst passed = okStatus && !!d.actor_role && !!d.rationale;\nconst gate = { rule_id: 'T-A1', title: '人审决策合法', constraint: 'status 必须在 approved/deferred/rejected 内，且角色与理由非空', pass: passed, signal: passed ? null : (okStatus ? 'actor_role/rationale 缺失' : 'decision.status 非法') };\nif (!passed) throw new Error('GATE_FAIL:' + JSON.stringify(gate));\nreturn { decision: { actor_role: d.actor_role, status: d.status, rationale: d.rationale }, recommendation: $('ParseDecide').first().json.recommendation, gate };"
+        "jsCode": "// 验收 Gate（fail-closed）：人审决策必须合法，否则抛错让执行失败。\n// fail_reason 给外层 Agent Loop 提供结构化原因（映射 loop.policy.reason_action_map）。\n// 人审输入不合法属不可自动修复 → unknown → 政策表只能 escalate。\nconst d = $json?.body || $json || {};\nconst okStatus = ['approved', 'deferred', 'rejected'].includes(d.status);\nconst passed = okStatus && !!d.actor_role && !!d.rationale;\nconst fail_reason = passed ? null : 'unknown';\nconst gate = { rule_id: 'T-A1', title: '人审决策合法', constraint: 'status 必须在 approved/deferred/rejected 内，且角色与理由非空', pass: passed, fail_reason, signal: passed ? null : (okStatus ? 'actor_role/rationale 缺失' : 'decision.status 非法') };\nif (!passed) throw new Error('GATE_FAIL:' + JSON.stringify(gate));\nreturn { decision: { actor_role: d.actor_role, status: d.status, rationale: d.rationale }, recommendation: $('ParseDecide').first().json.recommendation, gate };"
       },
       "id": "7ca53fd5-e010-4f01-9426-04863fd02b11",
       "name": "AcceptGate",
