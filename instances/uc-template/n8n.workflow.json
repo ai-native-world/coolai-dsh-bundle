@@ -12,7 +12,10 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "a8c31867-6206-47dc-9407-060c7a134507"
     },
     {
@@ -33,13 +36,30 @@
             }
           ]
         },
-        "options": {}
+        "options": {},
+        "includeOtherFields": true
       },
       "id": "ca58b830-6e14-4a50-b6a2-eaad30fad122",
       "name": "Goal",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [220, 0]
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 组装 DeepSeek 感知请求体；signal 来自 webhook 输入\nconst signal = $json.body?.signal || $json.signal || JSON.stringify($json);\nconst model = (typeof $env !== 'undefined' && $env.DEEPSEEK_MODEL) || 'deepseek-v4-flash';\nconst payload = {\n  model,\n  messages: [\n    { role: 'system', content: '你是通用 UC 的感知节点。从用户信号中抽取结构化事实，只输出 JSON 对象。格式：{\"fields\":{\"summary\":\"一句话概括\",\"entities\":[],\"facts\":{}}}' },\n    { role: 'user', content: signal },\n  ],\n  temperature: 0,\n  max_tokens: 1200,\n  response_format: { type: 'json_object' },\n};\nreturn { ...$json, payload };"
+      },
+      "id": "8f1c6d2e-0001-4000-8000-000000000001",
+      "name": "BuildPerceivePayload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
     },
     {
       "parameters": {
@@ -50,7 +70,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{$env.DEEPSEEK_API_KEY}}"
+              "value": "={{ 'Bearer ' + $env.DEEPSEEK_API_KEY }}"
             },
             {
               "name": "Content-Type",
@@ -60,7 +80,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: $env.DEEPSEEK_MODEL || 'deepseek-v4-flash', messages: [ { role: 'system', content: '你是通用 UC 的感知节点。从用户信号中抽取结构化事实，只输出 JSON 对象。格式：{\"fields\":{\"summary\":\"一句话概括\",\"entities\":[],\"facts\":{}}}' }, { role: 'user', content: $json.body?.signal || $json.signal || JSON.stringify($json) } ], temperature: 0, max_tokens: 1200, response_format: { type: 'json_object' } }) }}",
+        "jsonBody": "={{ $json.payload }}",
         "options": {
           "response": {
             "response": {
@@ -74,7 +94,10 @@
       "name": "Perceive",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [440, 0]
+      "position": [
+        440,
+        0
+      ]
     },
     {
       "parameters": {
@@ -84,7 +107,23 @@
       "name": "ParsePerceive",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 0]
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 组装 DeepSeek 决策请求体；fields 来自感知节点\nconst fields = $json.fields || $json;\nconst model = (typeof $env !== 'undefined' && $env.DEEPSEEK_MODEL) || 'deepseek-v4-flash';\nconst payload = {\n  model,\n  messages: [\n    { role: 'system', content: '你是通用 UC 的决策节点。基于结构化事实给出行动建议与理由，只输出 JSON 对象。格式：{\"recommendation\":{\"action\":\"建议动作\",\"reason\":\"理由\",\"risk\":\"风险\"}}' },\n    { role: 'user', content: JSON.stringify(fields) },\n  ],\n  temperature: 0,\n  max_tokens: 1200,\n  response_format: { type: 'json_object' },\n};\nreturn { ...$json, payload };"
+      },
+      "id": "8f1c6d2e-0002-4000-8000-000000000002",
+      "name": "BuildDecidePayload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        990,
+        0
+      ]
     },
     {
       "parameters": {
@@ -95,7 +134,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{$env.DEEPSEEK_API_KEY}}"
+              "value": "={{ 'Bearer ' + $env.DEEPSEEK_API_KEY }}"
             },
             {
               "name": "Content-Type",
@@ -105,7 +144,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: $env.DEEPSEEK_MODEL || 'deepseek-v4-flash', messages: [ { role: 'system', content: '你是通用 UC 的决策节点。基于结构化事实给出行动建议与理由，只输出 JSON 对象。格式：{\"recommendation\":{\"action\":\"建议动作\",\"reason\":\"理由\",\"risk\":\"风险\"}}' }, { role: 'user', content: JSON.stringify($json.fields) } ], temperature: 0, max_tokens: 1200, response_format: { type: 'json_object' } }) }}",
+        "jsonBody": "={{ $json.payload }}",
         "options": {
           "response": {
             "response": {
@@ -119,7 +158,10 @@
       "name": "Decide",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [880, 0]
+      "position": [
+        880,
+        0
+      ]
     },
     {
       "parameters": {
@@ -129,7 +171,10 @@
       "name": "ParseDecide",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1100, 0]
+      "position": [
+        1100,
+        0
+      ]
     },
     {
       "parameters": {
@@ -145,7 +190,10 @@
       "name": "Execute",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [1320, 0],
+      "position": [
+        1320,
+        0
+      ],
       "webhookId": "6cc5a920-76d5-4e0a-b3b6-1c5a90a18026"
     },
     {
@@ -156,7 +204,10 @@
       "name": "AcceptGate",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1540, 0]
+      "position": [
+        1540,
+        0
+      ]
     },
     {
       "parameters": {
@@ -166,7 +217,10 @@
       "name": "Learn",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1760, 0]
+      "position": [
+        1760,
+        0
+      ]
     }
   ],
   "connections": {
@@ -182,6 +236,17 @@
       ]
     },
     "Goal": {
+      "main": [
+        [
+          {
+            "node": "BuildPerceivePayload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BuildPerceivePayload": {
       "main": [
         [
           {
@@ -204,6 +269,17 @@
       ]
     },
     "ParsePerceive": {
+      "main": [
+        [
+          {
+            "node": "BuildDecidePayload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BuildDecidePayload": {
       "main": [
         [
           {
@@ -257,6 +333,11 @@
           }
         ]
       ]
+    },
+    "Learn": {
+      "main": {
+        "main": []
+      }
     }
   },
   "settings": {
