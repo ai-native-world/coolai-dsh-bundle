@@ -33,6 +33,16 @@ node examples/run-formula-sop.mjs
 当前 64 项：旧 UC 回归、编译 fail-closed、Gate fail-closed、配方 SOP E2E、跨引擎恢复、业务反例和通用 UC 模板基线。
 完整合同与边界见 [`docs/uc-workflow-contract.md`](docs/uc-workflow-contract.md)。
 
+## n8n 验证环境（六步工作流底座）
+
+另起一套 n8n 自托管环境验证「通用 UC 六步模板 + 真实执行审计投影」，不写业务引擎：
+
+- `instances/uc-template/n8n.workflow.json`：目标 → 感知 → 决策 → 执行(人审) → 验收 Gate → 学习
+- `infra/n8n/`：SQLite 单容器 compose + owner/api-key 引导脚本 + 操作手册
+- `scripts/n8n-audit.mjs`：把 n8n 真实 execution 只读投影为 `orgos.uc.receipt.v1`
+
+已在 coolai 跑通：正常 UC 全链路 success，非法人审 status fail-closed。详见 [`infra/n8n/README.md`](infra/n8n/README.md)。
+
 ## 挂载到 dsh
 
 ```bash
