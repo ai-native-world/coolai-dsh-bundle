@@ -1,0 +1,32 @@
+{
+  "schema": "orgos.agent.loop.policy.v1",
+  "title": "通用 UC 六步环 · Agent Loop 确定性策略（骨架版）",
+  "description": "约束 Agent 在 Gate 失败后的回环动作：封闭动作空间 + reason→action 政策表 + 最小权限 + 硬预算。实例只允许扩 allowed_sources，不允许改动作空间或政策表。",
+  "max_rounds": 3,
+  "reason_action_map": {
+    "missing_field": ["enrich_context", "escalate"],
+    "action_not_executable": ["replan", "escalate"],
+    "constraint_conflict": ["escalate"],
+    "data_unavailable": ["escalate"],
+    "permission_denied": ["escalate"],
+    "max_rounds_exceeded": ["stop"],
+    "unknown": ["escalate"]
+  },
+  "permissions": {
+    "enrich_context": {
+      "allowed_sources": [],
+      "max_sources_per_action": 5
+    },
+    "replan": {
+      "max_instruction_chars": 2000
+    },
+    "escalate": {
+      "allowed_recipients": ["human://owner"]
+    },
+    "stop": {}
+  },
+  "budget": {
+    "per_run_timeout_ms": 60000,
+    "backoff_ms": [1000, 5000, 15000]
+  }
+}
