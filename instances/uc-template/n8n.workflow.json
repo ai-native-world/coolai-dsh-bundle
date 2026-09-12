@@ -1,0 +1,267 @@
+{
+  "name": "UC Template v0.1 · 六步环（目标→感知→决策→执行(人审)→验收→学习）",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "uc-template/run",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "a7161689-3725-414b-ad03-722327e6c5d0",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "a8c31867-6206-47dc-9407-060c7a134507"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ca58b830-6e14-4a50-b6a2-eaad30fad122",
+              "name": "goal",
+              "value": "把自然语言信号转化为结构化事实；执行节点必须由责任人拍板；验收 Gate 不过则打回；学习节点沉淀复盘",
+              "type": "string"
+            },
+            {
+              "id": "ca58b830-6e14-4a50-b6a2-eaad30fad122",
+              "name": "constraints",
+              "value": "所有 Gate fail-closed，缺失即失败；人审节点不自动完成",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ca58b830-6e14-4a50-b6a2-eaad30fad122",
+      "name": "Goal",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.DEEPSEEK_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $env.DEEPSEEK_MODEL || 'deepseek-v4-flash', messages: [ { role: 'system', content: '你是通用 UC 的感知节点。从用户信号中抽取结构化事实，只输出 JSON 对象。格式：{\"fields\":{\"summary\":\"一句话概括\",\"entities\":[],\"facts\":{}}}' }, { role: 'user', content: $json.body?.signal || $json.signal || JSON.stringify($json) } ], temperature: 0, max_tokens: 1200, response_format: { type: 'json_object' } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "7d04ca0b-46d0-40ca-bfd4-6bcd402a5e34",
+      "name": "Perceive",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 从 DeepSeek 响应中抽取结构化事实；模型失败 = fail-closed\nconst content = $json?.choices?.[0]?.message?.content;\nif (!content) throw new Error('PERCEIVE_FAIL: 感知模型返回空 content');\nlet parsed;\ntry { parsed = JSON.parse(content); } catch (e) { throw new Error('PERCEIVE_FAIL: 感知模型输出非法 JSON'); }\nconst fields = parsed?.fields && typeof parsed.fields === 'object' && !Array.isArray(parsed.fields) ? parsed.fields : { raw: parsed };\nreturn { passed: true, fields, evidence: ['模型已抽取结构化事实'] };"
+      },
+      "id": "e2ecfd4d-fbaf-4006-9c7b-07804926f4bd",
+      "name": "ParsePerceive",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.DEEPSEEK_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $env.DEEPSEEK_MODEL || 'deepseek-v4-flash', messages: [ { role: 'system', content: '你是通用 UC 的决策节点。基于结构化事实给出行动建议与理由，只输出 JSON 对象。格式：{\"recommendation\":{\"action\":\"建议动作\",\"reason\":\"理由\",\"risk\":\"风险\"}}' }, { role: 'user', content: JSON.stringify($json.fields) } ], temperature: 0, max_tokens: 1200, response_format: { type: 'json_object' } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "cbef55f6-6319-4396-997e-d581aaf3df63",
+      "name": "Decide",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 决策建议非空，否则 fail-closed\nconst content = $json?.choices?.[0]?.message?.content;\nif (!content) throw new Error('DECIDE_FAIL: 决策模型返回空 content');\nlet parsed;\ntry { parsed = JSON.parse(content); } catch (e) { throw new Error('DECIDE_FAIL: 决策模型输出非法 JSON'); }\nconst recommendation = parsed?.recommendation ?? parsed;\nif (!recommendation || typeof recommendation !== 'object') throw new Error('DECIDE_FAIL: 决策建议为空');\nreturn { passed: true, recommendation };"
+      },
+      "id": "9e8c8068-ff22-4dd3-8004-4ad6dca06215",
+      "name": "ParseDecide",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "webhookPath": "uc-template/wait/execute",
+        "webhookOptions": {
+          "method": "POST",
+          "responseData": "allEntries",
+          "httpMethod": "POST"
+        }
+      },
+      "id": "6cc5a920-76d5-4e0a-b3b6-1c5a90a18026",
+      "name": "Execute",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1320, 0],
+      "webhookId": "6cc5a920-76d5-4e0a-b3b6-1c5a90a18026"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 验收 Gate（fail-closed）：人审决策必须合法，否则抛错让执行失败\nconst d = $json?.body || $json || {};\nconst okStatus = ['approved', 'deferred', 'rejected'].includes(d.status);\nconst passed = okStatus && !!d.actor_role && !!d.rationale;\nconst gate = { rule_id: 'T-A1', title: '人审决策合法', constraint: 'status 必须在 approved/deferred/rejected 内，且角色与理由非空', pass: passed, signal: passed ? null : (okStatus ? 'actor_role/rationale 缺失' : 'decision.status 非法') };\nif (!passed) throw new Error('GATE_FAIL:' + JSON.stringify(gate));\nreturn { decision: { actor_role: d.actor_role, status: d.status, rationale: d.rationale }, recommendation: $('ParseDecide').first().json.recommendation, gate };"
+      },
+      "id": "7ca53fd5-e010-4f01-9426-04863fd02b11",
+      "name": "AcceptGate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 学习复盘沉淀（骨架版，业务字段由实例替换）\nconst d = $json.decision;\nconst gate = $('AcceptGate').first().json.gate;\nreturn { learning: { outcome: d.status, accepted: gate.pass, rules_applied: ['T-A1'], next_action: d.status === 'approved' ? '继续执行' : d.status === 'deferred' ? '责任人复核' : '按驳回重新评估' } };"
+      },
+      "id": "5410f514-f468-444e-98a6-a83a2520fd36",
+      "name": "Learn",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Goal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Goal": {
+      "main": [
+        [
+          {
+            "node": "Perceive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perceive": {
+      "main": [
+        [
+          {
+            "node": "ParsePerceive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ParsePerceive": {
+      "main": [
+        [
+          {
+            "node": "Decide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide": {
+      "main": [
+        [
+          {
+            "node": "ParseDecide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ParseDecide": {
+      "main": [
+        [
+          {
+            "node": "Execute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute": {
+      "main": [
+        [
+          {
+            "node": "AcceptGate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AcceptGate": {
+      "main": [
+        [
+          {
+            "node": "Learn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "active": true
+}

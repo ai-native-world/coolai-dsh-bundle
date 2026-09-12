@@ -1,0 +1,27 @@
+# n8n 自托管验证环境（SQLite 单容器，短平快）。
+# 生产多租户/队列可替换为 postgres + worker；此处仅验证「通用 UC 六步模板 + 真实执行审计投影」。
+services:
+  n8n:
+    image: n8nio/n8n:2.38.7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=Asia/Shanghai
+      - TZ=Asia/Shanghai
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-coolai-n8n-dev}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-coolai-dev-encryption-key-change-me}
+      # DeepSeek 凭据从宿主机透传；在 coolai 上部署时用 .env 注入真实 key
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-v4-flash}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      # 通用 UC 六步模板（UC 是数据，不是代码）
+      - ../../instances/uc-template/n8n.workflow.json:/data/uc-template.n8n.workflow.json:ro
+volumes:
+  n8n_data:
