@@ -179,12 +179,9 @@
     {
       "parameters": {
         "resume": "webhook",
-        "webhookPath": "uc-template/wait/execute",
-        "webhookOptions": {
-          "method": "POST",
-          "responseData": "allEntries",
-          "httpMethod": "POST"
-        }
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "responseData": "allEntries"
       },
       "id": "6cc5a920-76d5-4e0a-b3b6-1c5a90a18026",
       "name": "Execute",
