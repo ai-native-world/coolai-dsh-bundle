@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>组织OS · 通用 UC 框架基线</title>
+<style>
+  :root { --bg:#f3f5f9; --card:#fff; --line:#e5e7eb; --ink:#0f172a; --muted:#64748b; --ok:#16a34a; --bad:#dc2626; --warn:#d97706; --blue:#2563eb; --indigo:#4338ca; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC",sans-serif; background:var(--bg); color:var(--ink); height:100vh; display:flex; overflow:hidden; }
+  main { flex:1; overflow:auto; padding:22px; }
+  .top { margin-bottom:16px; }
+  .top h1 { font-size:19px; margin:0; }
+  .top .desc { color:var(--muted); font-size:13px; margin-top:4px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .panel h2 { font-size:13px; color:var(--muted); font-weight:600; margin:0 0 12px; }
+  textarea { width:100%; min-height:100px; padding:12px; border:1px solid var(--line); border-radius:10px; font:13px/1.6 ui-monospace,Menlo,monospace; background:#fff; }
+  .row { display:flex; gap:10px; margin-top:12px; }
+  button { padding:10px 18px; border:0; border-radius:9px; background:var(--blue); color:#fff; cursor:pointer; font-weight:600; }
+  button.ghost { background:#eef2ff; color:var(--blue); }
+  .flow { display:flex; align-items:stretch; gap:0; }
+  .node { flex:1; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; background:#fff; position:relative; }
+  .node .idx { font-size:11px; color:var(--muted); }
+  .node b { display:block; font-size:13px; margin:4px 0; }
+  .node .sub { font-size:11px; color:var(--muted); }
+  .node.done { border-color:#86efac; background:#f0fdf4; }
+  .node.running { border-color:#fde68a; background:#fffbeb; }
+  .node.wait { border-color:#fca5a5; background:#fef2f2; }
+  .node.gate { border-color:#c7d2fe; background:#f8faff; }
+  .arrow { display:flex; align-items:center; color:var(--muted); padding:0 4px; font-size:18px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .box { border:1px solid var(--line); border-radius:12px; padding:14px; background:#fafafa; }
+  .box h3 { margin:0 0 8px; font-size:13px; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:999px; font-size:12px; font-weight:700; }
+  .approved { background:#dcfce7; color:var(--ok); }
+  .deferred { background:#fef3c7; color:var(--warn); }
+  .rejected { background:#fee2e2; color:var(--bad); }
+  .human { margin-top:14px; padding:14px; border:1px dashed var(--warn); border-radius:12px; background:#fffbeb; }
+  label { display:block; font-size:12px; color:var(--muted); margin:8px 0 3px; }
+  input, select { width:100%; padding:8px; border:1px solid var(--line); border-radius:8px; font:13px/1.5 ui-monospace,Menlo,monospace; }
+  details { margin-top:14px; }
+  details pre { background:#0f172a; color:#d1fae5; padding:12px; border-radius:10px; overflow:auto; font:12px/1.5 ui-monospace,Menlo,monospace; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>组织OS · 通用 UC 框架基线</h1>
+    <div class="desc">不绑定具体客户 UC。六步环：目标 → 感知 → 决策 → 执行(人审) → 验收 → 学习。审计回执由引擎事件账本投影生成。</div>
+  </div>
+
+  <section class="panel">
+    <h2>1 · 框架模板（uc-template@0.1.0）</h2>
+    <div class="flow" id="flow"></div>
+  </section>
+
+  <section class="panel">
+    <h2>2 · 输入一个信号（任意文本，框架只负责走完六步）</h2>
+    <textarea id="signal">客户希望把某个手工流程自动化：每天从系统里取数、判断是否异常、再由负责人确认处理。</textarea>
+    <div class="row"><button id="run">运行框架</button><button id="reset" class="ghost">重置样例</button></div>
+  </section>
+
+  <section class="panel" id="human" style="display:none">
+    <h2>3 · 人审节点（不自动完成）</h2>
+    <label>角色</label><input id="actor" value="负责人" />
+    <label>决定</label>
+    <select id="status"><option value="approved">approved · 通过</option><option value="deferred">deferred · 暂缓</option><option value="rejected">rejected · 驳回</option></select>
+    <label>理由</label><input id="rationale" value="按框架验证，先跑通流程。" />
+    <div class="row"><button id="resume">提交人审</button></div>
+  </section>
+
+  <section class="panel" id="resultPanel" style="display:none">
+    <h2>4 · 运行结果</h2>
+    <div class="grid">
+      <div class="box"><h3>状态</h3><div id="status"></div></div>
+      <div class="box"><h3>四问审计回执</h3><a id="receiptLink" href="#" target="_blank">打开 /api/receipt</a></div>
+    </div>
+    <details open><summary>引擎事件账本（真实执行轨迹）</summary><pre id="audit"></pre></details>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ORDER = [
+  ['goal','目标'], ['perceive','感知'], ['decide','决策'], ['execute','执行(人审)'], ['accept','验收'], ['learn','学习'],
+];
+const SAMPLE = '客户希望把某个手工流程自动化：每天从系统里取数、判断是否异常、再由负责人确认处理。';
+$('signal').value = SAMPLE;
+$('reset').onclick = () => { $('signal').value = SAMPLE; };
+
+function renderFlow() {
+  const el = $('flow'); el.innerHTML = '';
+  ORDER.forEach(([id, name], i) => {
+    const node = document.createElement('div');
+    node.className = 'node' + (id === 'accept' ? ' gate' : '');
+    node.id = 'n-' + id;
+    node.innerHTML = `<div class="idx">${i+1}</div><b>${name}</b><div class="sub">${id}</div>`;
+    el.appendChild(node);
+    if (i < ORDER.length - 1) {
+      const a = document.createElement('div'); a.className = 'arrow'; a.textContent = '→'; el.appendChild(a);
+    }
+  });
+}
+function resetFlow() {
+  ORDER.forEach(([id]) => { const el = $('n-'+id); el.className = 'node' + (id==='accept' ? ' gate' : ''); });
+}
+function setNode(id, cls) { const el = $('n-'+id); el.className = 'node ' + (id==='accept' ? 'gate ' : '') + cls; }
+function renderFlowFrom(data) {
+  resetFlow();
+  const ev = data.events || [];
+  const started = new Set(ev.filter(e => e.type==='step_start' || e.type==='step_resume').map(e => e.step));
+  const done = new Set(ev.filter(e => e.type==='step_end').map(e => e.step));
+  const pending = ev.find(e => e.type==='run_pending');
+  if (data.status === 'failed') {
+    const failEv = [...ev].reverse().find(e => e.type==='run_failed' || (e.type==='step_end' && ['FAIL','FAIL_GATE'].includes(e.signal)));
+    const failStep = failEv?.step;
+    ORDER.forEach(([id]) => {
+      if (done.has(id)) setNode(id, 'done');
+      else if (id === failStep) setNode(id, 'wait');
+    });
+    return;
+  }
+  ORDER.forEach(([id]) => {
+    if (done.has(id)) setNode(id, 'done');
+    else if (id === pending?.step) setNode(id, 'wait');
+    else if (started.has(id)) setNode(id, 'running');
+  });
+}
+function render(data) {
+  $('resultPanel').style.display = 'block';
+  $('receiptLink').style.display = data.runId ? 'inline' : 'none';
+  $('receiptLink').href = '/api/receipt?id=' + (data.runId || '');
+  const badge = s => `<span class="badge ${s}">${s}</span>`;
+  $('status').innerHTML = data.status === 'failed'
+    ? `<span class="badge rejected">${data.code || 'FAILED'} · fail-closed</span><div>${(data.errors || []).join('；')}</div>`
+    : data.status === 'wait_human'
+      ? `<span class="badge deferred">wait_human · 等待人审</span>`
+      : `<span class="badge approved">done</span><div>决策：${badge(data.output?.decision?.status || '-')}</div><div>学习：${JSON.stringify(data.output?.learning || {})}</div>`;
+  $('audit').textContent = JSON.stringify({ status: data.status, code: data.code, events: data.events, receipt: data.receipt }, null, 2);
+}
+async function run() {
+  const res = await fetch('/api/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ signal: $('signal').value }) });
+  const data = await res.json();
+  if (data.error) { $('resultPanel').style.display='block'; $('status').innerHTML = `<span class="badge rejected">${data.error}</span>`; return; }
+  renderFlowFrom(data); render(data);
+  $('human').style.display = (data.status === 'wait_human') ? 'block' : 'none';
+  window.currentRunId = data.runId;
+}
+$('run').onclick = run;
+$('resume').onclick = async () => {
+  const response = { actor_role: $('actor').value, status: $('status').value, rationale: $('rationale').value };
+  const res = await fetch('/api/resume', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ runId: window.currentRunId, response }) });
+  const data = await res.json();
+  if (data.error) { $('audit').textContent = data.error; return; }
+  renderFlowFrom(data); render(data); $('human').style.display = 'none';
+};
+renderFlow();
+</script>
+</body>
+</html>

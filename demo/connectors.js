@@ -66,8 +66,7 @@ export function summarizeRun(r) {
   return { title: '组织OS · UC36', text: `状态：${r.status}` }
 }
 
-export async function notifyRun(r) {
-  const { title, text } = summarizeRun(r)
+export async function notifyMessage(title, text) {
   const active = Object.entries(CHANNELS).filter(([, c]) => c.enabled())
   if (DRY_RUN) {
     console.log(`[notify:dry-run] ${title} | 通道=${active.map(([k]) => k).join(',') || 'none'} | ${text.replace(/\n/g, ' | ')}`)
@@ -81,4 +80,9 @@ export async function notifyRun(r) {
     try { await ch.send(title, text) }
     catch (e) { console.error(`[notify:error] ${name}: ${e.message}`) }
   }
+}
+
+export async function notifyRun(r) {
+  const { title, text } = summarizeRun(r)
+  return notifyMessage(title, text)
 }
