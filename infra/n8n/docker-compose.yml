@@ -18,9 +18,22 @@ services:
       # DeepSeek 凭据从宿主机透传；在 coolai 上部署时用 .env 注入真实 key
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
       - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-v4-flash}
+      # 审批通知网关（Apprise 侧车）；通知失败不阻断 UC 执行
+      - APPRISE_NOTIFY_URL=${APPRISE_NOTIFY_URL:-http://apprise:8000/notify/}
     volumes:
       - n8n_data:/home/node/.n8n
       # 通用 UC 六步模板（UC 是数据，不是代码）
       - ../../instances/uc-template/n8n.workflow.json:/data/uc-template.n8n.workflow.json:ro
+
+  # Apprise：通知网关（飞书/Lark、钉钉、企业微信 Bot 等 130+ 渠道的通用连接器）。
+  # 渠道只通过 APPRISE_STATELESS_URLS 注入，不写死任何客户业务。
+  apprise:
+    image: caronc/apprise:v1.5.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - APPRISE_STATELESS_URLS=${APPRISE_STATELESS_URLS:-}
+      - APPRISE_WORKERS=${APPRISE_WORKERS:-2}
 volumes:
   n8n_data:

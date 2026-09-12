@@ -3,17 +3,20 @@
 用 n8n 做通用 UC 六步工作流底座，验证「审计 = 引擎真实执行账本的只读投影」。
 
 - 模板：`../../instances/uc-template/n8n.workflow.json`（目标 → 感知 → 决策 → 执行(人审) → 验收 Gate → 学习）
+- 通知：`BuildNotify` → `NotifyApprise`（Apprise 网关，飞书/钉钉/企微等多通道，失败不阻断 UC）
 - 审计投影：`../../scripts/n8n-audit.mjs` → `orgos.uc.receipt.v1`
-- 定位：n8n 是轮子，我们只写「节点编排 + 审计投影胶水」，不手写业务引擎。
+- 定位：n8n 是轮子，Apprise 是轮子，我们只写「节点编排 + 审计投影胶水」，不手写业务引擎。
 
 ## 部署
 
 ```bash
 cd infra/n8n
-cp .env.example .env          # 填入真实 DEEPSEEK_API_KEY
+cp .env.example .env          # 填入真实 DEEPSEEK_API_KEY；可选填 APPRISE_STATELESS_URLS
 docker compose up -d
 python3 bootstrap.py          # 首次创建 owner + public API key，写入 .api-key
 ```
+
+通知渠道（可选）：把 `APPRISE_STATELESS_URLS` 填成逗号分隔的 Apprise URL，重启 `apprise` 侧车即生效；不填则通知节点安全跳过，不影响 UC 执行。
 
 ## 导入并激活通用 UC 模板
 
@@ -28,7 +31,7 @@ curl -s -X POST http://localhost:5678/api/v1/workflows/<workflowId>/activate \
   -H "X-N8N-API-KEY: $N8N_API_KEY"
 ```
 
-## 跑一遍（真实执行 + 人审）
+## 跑一遍（真实执行 + 人审 + 审批通知）
 
 ```bash
 # 1) 触发（webhook 是公开入口，携带调用通道/人/信号）
@@ -39,7 +42,8 @@ curl -s -X POST http://localhost:5678/webhook/uc-template/run \
 # 2) 查最新 execution id 与等待中节点的 resumeUrl
 curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" "http://localhost:5678/api/v1/executions?limit=1" | python3 -m json.tool
 
-# 3) 人审拍板：POST 审批决定到 resumeUrl（Wait 节点不会自动完成）
+# 3) 审批通知：BuildNotify 已把 resumeUrl 通过 Apprise 发出（配置了 APPRISE_STATELESS_URLS 时）
+#    审批人按通知里的地址人审拍板：POST 审批决定到 resumeUrl（Wait 节点不会自动完成）
 curl -s -X POST "<resumeUrl>" -H "Content-Type: application/json" \
   -d '{"status":"approved","actor_role":"厂务负责人","rationale":"同意先复核再决定是否停机"}'
 ```

@@ -218,6 +218,38 @@
         1760,
         0
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 审批通知载荷：同一 execution 内、在 Wait 之前取恢复 URL，交给 Apprise 通知网关（飞书/钉钉/企微等多通道）\nconst rec = $json.recommendation;\nconst resumeUrl = $execution.resumeUrl;\nif (!resumeUrl) throw new Error('NOTIFY_FAIL: 未取到 Wait 恢复 URL');\nconst body = [\n  '组织OS UC 审批待办',\n  '建议动作：' + (rec?.action ?? ''),\n  '理由：' + (rec?.reason ?? ''),\n  '风险：' + (rec?.risk ?? ''),\n  '请在下方 URL 提交 POST 完成审批（status 可选 approved/deferred/rejected）：',\n  resumeUrl,\n  '审批体：{\"status\":\"approved\",\"actor_role\":\"责任人角色\",\"rationale\":\"理由\"}',\n].join('\\n');\nreturn { ...$json, notify: { title: '组织OS UC 审批待办', body, type: 'info', format: 'text' } };"
+      },
+      "id": "50cd9f87-8289-410d-8966-dc297098f817",
+      "name": "BuildNotify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1210,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.APPRISE_NOTIFY_URL || 'http://apprise:8000/notify/' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.notify }}",
+        "options": {}
+      },
+      "id": "29317a12-8819-4bfd-9460-be6f257967ee",
+      "name": "NotifyApprise",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        1210,
+        0
+      ]
     }
   ],
   "connections": {
@@ -302,7 +334,7 @@
       "main": [
         [
           {
-            "node": "Execute",
+            "node": "BuildNotify",
             "type": "main",
             "index": 0
           }
@@ -333,6 +365,28 @@
     },
     "Learn": {
       "main": []
+    },
+    "BuildNotify": {
+      "main": [
+        [
+          {
+            "node": "NotifyApprise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NotifyApprise": {
+      "main": [
+        [
+          {
+            "node": "Execute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
